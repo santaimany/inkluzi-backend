@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, IsOptional, IsPhoneNumber, IsUrl } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsOptional, IsUrl } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class RegisterSppgDto {
@@ -13,25 +13,33 @@ export class RegisterSppgDto {
 
   @ApiProperty({ example: 'SPPG Jakarta Pusat' })
   @IsString()
-  nama_sppg: string;
+  nama_instansi: string;
+
+  @ApiProperty({
+    example: 'Jakarta Pusat',
+  })
+  wilayah_kerja: string;
 
   @ApiPropertyOptional({ example: 'Jl. Sudirman No. 123, Jakarta Pusat' })
   @IsOptional()
   @IsString()
   alamat?: string;
 
-  @ApiPropertyOptional({ example: '+6281234567890' })
-  @IsOptional()
-  @IsPhoneNumber('ID')
-  nomor_telepon?: string;
+  @ApiProperty({ example: 'Budi Santoso' })
+  @IsString()
+  penanggung_jawab: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com/logo.png' })
+  @ApiProperty({ example: '+6281234567890' })
+  @IsString()
+  nomor_kontak: string;
+  
+  @ApiPropertyOptional({ example: 'https://res.cloudinary.com/demo/image/upload/logo.png' })
   @IsOptional()
   @IsUrl()
-  logo_url?: string;
+  photo_url?: string;
 
-  @ApiPropertyOptional({ example: 'public-id-123' })
+  @ApiPropertyOptional({ example: 'mbg/logos/sppg_123' })
   @IsOptional()
   @IsString()
-  logo_cloudinary_public_id?: string;
+  cloudinary_public_id?: string;
 }

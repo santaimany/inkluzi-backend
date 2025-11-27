@@ -28,7 +28,7 @@ export class RegisterSekolahDto {
   @IsString()
   jenis_sekolah: string;
 
-  @ApiProperty({ example: 'Jl. Menteng Raya No. 5, Jakarta' })
+  @ApiProperty({ example: 'Jl. Menteng Raya No. 5, Jakarta Pusat' })
   @IsString()
   alamat: string;
 
@@ -46,12 +46,12 @@ export class RegisterSekolahDto {
   @IsString()
   nomor_kontak: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com/logo.png' })
+  @ApiPropertyOptional({ example: 'https://res.cloudinary.com/demo/image/upload/school_logo.png' })
   @IsOptional()
   @IsUrl()
   photo_url?: string;
 
-  @ApiPropertyOptional({ example: 'public-id-456' })
+  @ApiPropertyOptional({ example: 'mbg/logos/school_456' })
   @IsOptional()
   @IsString()
   cloudinary_public_id?: string;
