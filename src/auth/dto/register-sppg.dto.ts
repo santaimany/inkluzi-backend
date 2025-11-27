@@ -23,7 +23,7 @@ export class RegisterSppgDto {
   @ApiPropertyOptional({ example: 'Jl. Sudirman No. 123, Jakarta Pusat' })
   @IsOptional()
   @IsString()
-  alamat?: string;
+  alamat: string;
 
   @ApiProperty({ example: 'Budi Santoso' })
   @IsString()
@@ -32,7 +32,7 @@ export class RegisterSppgDto {
   @ApiProperty({ example: '+6281234567890' })
   @IsString()
   nomor_kontak: string;
-  
+
   @ApiPropertyOptional({ example: 'https://res.cloudinary.com/demo/image/upload/logo.png' })
   @IsOptional()
   @IsUrl()
