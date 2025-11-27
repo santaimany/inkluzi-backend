@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -11,4 +5,233 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  admin
+  sppg
+  sekolah
+}
+
+enum UserStatus {
+  pending
+  active
+  inactive
+}
+
+enum ReportStatus {
+  processing
+  completed
+}
+
+enum StatusKeamanan {
+  aman
+  perlu_perhatian
+  tidak_aman
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String     @unique @db.VarChar(255)
+  passwordHash String     @map("password_hash") @db.VarChar(255)
+  role         UserRole
+  status       UserStatus @default(pending)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  refreshTokens RefreshToken[]
+  sppgProfile   SppgProfile?
+  schoolProfile SchoolProfile?
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique @db.VarChar(500)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+// ============================================
+// SPPG PROFILES
+// ============================================
+
+model SppgProfile {
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @unique @map("user_id") @db.Uuid
+  namaInstansi       String   @map("nama_instansi") @db.VarChar(255)
+  wilayahKerja       String   @map("wilayah_kerja") @db.VarChar(255)
+  alamat             String   @db.Text
+  penanggungJawab    String   @map("penanggung_jawab") @db.VarChar(255)
+  nomorKontak        String   @map("nomor_kontak") @db.VarChar(20)
+  photoUrl           String?  @map("photo_url") @db.VarChar(500)
+  cloudinaryPublicId String?  @map("cloudinary_public_id") @db.VarChar(255)
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolProfiles SchoolProfile[]
+  menus          Menu[]
+  reports        Report[]
+
+  @@map("sppg_profiles")
+}
+
+// ============================================
+// SCHOOL PROFILES
+// ============================================
+
+model SchoolProfile {
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @unique @map("user_id") @db.Uuid
+  sppgId             String   @map("sppg_id") @db.Uuid
+  namaSekolah        String   @map("nama_sekolah") @db.VarChar(255)
+  npsn               String   @unique @db.VarChar(20)
+  jenisSekolah       String   @map("jenis_sekolah") @db.VarChar(50)
+  alamat             String   @db.Text
+  totalSiswa         Int      @map("total_siswa")
+  penanggungJawab    String   @map("penanggung_jawab") @db.VarChar(255)
+  nomorKontak        String   @map("nomor_kontak") @db.VarChar(20)
+  photoUrl           String?  @map("photo_url") @db.VarChar(500)
+  cloudinaryPublicId String?  @map("cloudinary_public_id") @db.VarChar(255)
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sppgProfile      SppgProfile       @relation(fields: [sppgId], references: [id])
+  disabilityTypes  DisabilityType[]
+  menuAssignments  MenuAssignment[]
+  foodScans        FoodScan[]
+  reports          Report[]
+
+  @@map("school_profiles")
+}
+
+model DisabilityType {
+  id               String   @id @default(uuid()) @db.Uuid
+  schoolProfileId  String   @map("school_profiles_id") @db.Uuid
+  jenisDisabilitas String   @map("jenis_disabilitas") @db.VarChar(100)
+  jumlahSiswa      Int      @map("jumlah_siswa")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relations
+  schoolProfile SchoolProfile @relation(fields: [schoolProfileId], references: [id], onDelete: Cascade)
+
+  @@map("disability_types")
+}
+
+// ============================================
+// MENUS (MANY-TO-MANY with Schools)
+// ============================================
+
+model Menu {
+  id               String          @id @default(uuid()) @db.Uuid
+  sppgId           String          @map("sppg_id") @db.Uuid
+  tanggalDisajikan DateTime        @map("tanggal_disajikan") @db.Date
+  namaMenu         String          @map("nama_menu") @db.VarChar(255)
+  komponenMenu     String          @map("komponen_menu") @db.Text
+  
+  // ML Results
+  kandunganGizi    Json?           @map("kandungan_gizi")
+  deteksiRisiko    Json?           @map("deteksi_risiko")
+  rekomendasi      String?         @db.Text
+  statusKeamanan   StatusKeamanan? @map("status_keamanan")
+  mlConfidence     Float?          @map("ml_confidence") @db.Real
+  
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  sppgProfile     SppgProfile      @relation(fields: [sppgId], references: [id], onDelete: Cascade)
+  menuAssignments MenuAssignment[]
+  reports         Report[]
+
+  @@index([sppgId, tanggalDisajikan])
+  @@map("menus")
+}
+
+model MenuAssignment {
+  id            String   @id @default(uuid()) @db.Uuid
+  menuId        String   @map("menu_id") @db.Uuid
+  sekolahId     String   @map("sekolah_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  menu          Menu          @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  schoolProfile SchoolProfile @relation(fields: [sekolahId], references: [id], onDelete: Cascade)
+
+  @@unique([menuId, sekolahId])
+  @@map("menu_assignments")
+}
+
+// ============================================
+// FOOD SCANS
+// ============================================
+
+model FoodScan {
+  id                 String          @id @default(uuid()) @db.Uuid
+  sekolahId          String          @map("sekolah_id") @db.Uuid
+  imageUrl           String          @map("image_url") @db.VarChar(500)
+  cloudinaryPublicId String          @map("cloudinary_public_id") @db.VarChar(255)
+  
+  // ML Predictions
+  namaMakanan        String?         @map("nama_makanan") @db.VarChar(255)
+  komponenMenu       String?         @map("komponen_menu") @db.Text
+  kandunganGizi      Json?           @map("kandungan_gizi")
+  deteksiRisiko      Json?           @map("deteksi_risiko")
+  rekomendasi        String?         @db.Text
+  mlConfidence       Float?          @map("ml_confidence") @db.Real
+  
+  scannedAt          DateTime        @default(now()) @map("scanned_at")
+
+  // Relations
+  schoolProfile SchoolProfile @relation(fields: [sekolahId], references: [id], onDelete: Cascade)
+
+  @@index([sekolahId, scannedAt])
+  @@map("food_scans")
+}
+
+// ============================================
+// REPORTS
+// ============================================
+
+model Report {
+  id                 String        @id @default(uuid()) @db.Uuid
+  sekolahId          String        @map("sekolah_id") @db.Uuid
+  sppgId             String        @map("sppg_id") @db.Uuid
+  menuId             String?       @map("menu_id") @db.Uuid
+  imageUrl           String?       @map("image_url") @db.VarChar(500)
+  cloudinaryPublicId String?       @map("cloudinary_public_id") @db.VarChar(255)
+  catatan            String        @db.Text
+  status             ReportStatus  @default(processing)
+  sppgResponse       String?       @map("sppg_response") @db.Text
+  respondedAt        DateTime?     @map("responded_at")
+  createdAt          DateTime      @default(now()) @map("created_at")
+
+  // Relations
+  schoolProfile SchoolProfile @relation(fields: [sekolahId], references: [id], onDelete: Cascade)
+  sppgProfile   SppgProfile   @relation(fields: [sppgId], references: [id])
+  menu          Menu?         @relation(fields: [menuId], references: [id], onDelete: SetNull)
+
+  @@index([sekolahId, status])
+  @@index([sppgId, status])
+  @@map("reports")
 }
