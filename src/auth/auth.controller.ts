@@ -1,34 +1,38 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 
+import { ApiOperation, ApiResponse as SwaggerResponse, ApiTags } from '@nestjs/swagger';
+import { RegisterSppgDto } from './dto/register-sppg.dto';
+
+@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  @Post('register/sppg')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ 
+    summary: 'Register SPPG',
+    description: 'Registrasi akun SPPG baru. Status awal: pending (perlu approval admin)'
+  })
+  @SwaggerResponse({
+    status: 201,
+    description: 'User registered successfully',
+    schema: {
+      example: {
+        success: true,
+        message: 'User registered successfully',
+        data: {
+          user_id: 'uuid-of-new-user',
+          status: 'pending'
+        }
+      }
+    }
+  })
+  @SwaggerResponse({ status: 409, description: 'Email sudah terdaftar' })
+  async registerSppg(@Body() dto: RegisterSppgDto) {
+    return this.authService.registerSppg(dto);
   }
 
-  @Get()
-  findAll() {
-    return this.authService.findAll();
-  }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
-  }
 }
