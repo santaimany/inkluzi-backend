@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
@@ -51,11 +51,11 @@ export class AuthService {
   async registerSekolah(dto: RegisterSekolahDto) {
     await this.checkEmailAvailability(dto.email);
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-    const npsn = await this.prisma.schoolProfile.findUnique({
+    const existingNpsn = await this.prisma.schoolProfile.findUnique({
       where: { npsn: dto.npsn }
     })
 
-    if(npsn) {
+    if(existingNpsn) {
       throw new ConflictException('NPSN sudah terdaftar');
     }
 
@@ -96,7 +96,76 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email},
+      include: {
+        sppgProfile: true,
+        schoolProfile: true,
+      },
+    });
 
+    if(!user){
+      throw new UnauthorizedException('Email atau password salah');
+    }
+
+    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+    if(!isPasswordValid){
+      throw new UnauthorizedException('Email atau password salah');
+    }
+    if(user.status !== 'active') {
+      throw new UnauthorizedException('Akun belum diverifikasi. Silakan tunggu konfirmasi dari admin.');
+    }
+
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
+
+      const userData: any = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      created_at: user.createdAt.toISOString(),
+    };
+
+    // Add profile based on role
+    if (user.sppgProfile) {
+      userData.sppg_profile = {
+        id: user.sppgProfile.id,
+        nama_instansi: user.sppgProfile.namaInstansi,
+        wilayah_kerja: user.sppgProfile.wilayahKerja,
+        alamat: user.sppgProfile.alamat,
+        penanggung_jawab: user.sppgProfile.penanggungJawab,
+        nomor_kontak: user.sppgProfile.nomorKontak,
+        photo_url: user.sppgProfile.photoUrl,
+        cloudinary_public_id: user.sppgProfile.cloudinaryPublicId,
+      };
+    }
+
+    if (user.schoolProfile) {
+      userData.school_profile = {
+        id: user.schoolProfile.id,
+        sppg_id: user.schoolProfile.sppgId,
+        nama_sekolah: user.schoolProfile.namaSekolah,
+        npsn: user.schoolProfile.npsn,
+        jenis_sekolah: user.schoolProfile.jenisSekolah,
+        alamat: user.schoolProfile.alamat,
+        total_siswa: user.schoolProfile.totalSiswa,
+        penanggung_jawab: user.schoolProfile.penanggungJawab,
+        nomor_kontak: user.schoolProfile.nomorKontak,
+        photo_url: user.schoolProfile.photoUrl,
+        cloudinary_public_id: user.schoolProfile.cloudinaryPublicId,
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Login successful',
+      data: {
+        user: userData,
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+    }
+  }
+    
   }
 
 
