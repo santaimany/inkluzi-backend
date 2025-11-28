@@ -15,7 +15,7 @@ export interface PaginatedResponse<T> extends ApiResponse<T> {
     success: boolean; 
     message: string;
     data: T;
-    meta: PaginationMeta;
+    meta?: PaginationMeta;
 }
 
 

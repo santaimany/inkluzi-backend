@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { RegisterSppgDto } from './dto/register-sppg.dto';
 import { RegisterSekolahDto } from './dto/register-sekolah.dto';
 import { LoginDto } from './dto/login.dto';
+import { ApiResponse } from 'src/common/interfaces/api-response.interface';
 
 @Injectable()
 export class AuthService {
@@ -165,7 +166,43 @@ export class AuthService {
         refresh_token: tokens.refresh_token,
     }
   }
-    
+  }
+
+  async refreshToken(refreshToken: string) {
+    try {
+      const payload = this.jwtService.verify(refreshToken,{
+        secret: this.configService.get<string>('JWT_SECRET'),
+      });
+      const storedToken = await this.prisma.refreshToken.findUnique({
+        where: { 
+          token: refreshToken,
+          userId: payload.sub,
+          expiresAt: {
+            gt: new Date(),
+          }
+        },
+      })
+
+      if(!storedToken){
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
+
+      const tokens = await this.generateTokens(payload.sub, payload.email, payload.role); 
+      await this.prisma.refreshToken.delete({
+        where: {id: storedToken.id},
+      });
+      return {
+        success: true,
+        message: 'Token refreshed successfully',
+        data: {
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+        },
+      }
+
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired refresh token' + error.message);
+    }
   }
 
 
