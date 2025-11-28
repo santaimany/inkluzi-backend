@@ -18,6 +18,7 @@ export class RegisterSppgDto {
   @ApiProperty({
     example: 'Jakarta Pusat',
   })
+  @IsString()
   wilayah_kerja: string;
 
   @ApiPropertyOptional({ example: 'Jl. Sudirman No. 123, Jakarta Pusat' })
