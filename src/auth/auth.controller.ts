@@ -1,12 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
-import { ApiOperation, ApiResponse as SwaggerResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse as SwaggerResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { RegisterSppgDto } from './dto/register-sppg.dto';
 import { RegisterSekolahDto } from './dto/register-sekolah.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshToken } from 'generated/prisma';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -117,6 +118,29 @@ export class AuthController {
   @SwaggerResponse({ status: 401, description: 'Refresh token tidak valid atau sudah kadaluarsa' })
   async refresh(@Body() dto: RefreshTokenDto) {
     return await this.authService.refreshToken(dto.refresh_token);
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'User Logout',
+    description: 'Menghapus refresh token saat user logout'
+  })
+  @SwaggerResponse({
+    status: 200,
+    description: 'Logout successful',
+    schema: {
+      example: {
+        success: true,
+        message: 'Logout successful',
+      }
+    }
+  })
+  @SwaggerResponse({ status: 401, description: 'Unauthorized' })
+  async logout(@Request() req, @Body() dto: RefreshTokenDto) {
+    return await this.authService.logout(req.user.userId, dto.refresh_token);
   }
 
 

@@ -176,6 +176,20 @@ export class AuthService {
     }
   }
 
+  async logout(userId: string, refreshToken: string) {
+    await this.prisma.refreshToken.deleteMany({
+      where: {
+        userId: userId,
+        token: refreshToken,
+      }
+    })
+
+    return {
+      success: true,
+      message: 'Logout successful',
+    }
+  }
+
 
   //+++++++++++++++++++++++++++++++++++
   // Helper Methods
