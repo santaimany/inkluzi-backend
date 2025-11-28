@@ -5,6 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RegisterSppgDto } from './dto/register-sppg.dto';
 import { RegisterSekolahDto } from './dto/register-sekolah.dto';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -82,13 +83,23 @@ export class AuthService {
           },
         },
       },
-      select: { id: true, email: true, role: true, status: true },
     });
 
-    return user;
+     return {
+    success: true,
+      message: 'User registered successfully',
+      data: {
+        user_id: user.id,
+        status: user.status,
+      },
+  }
   }
 
-  
+  async login(dto: LoginDto) {
+
+  }
+
+
   //+++++++++++++++++++++++++++++++++++
   // Helper Methods
   //+++++++++++++++++++++++++++++++++++
