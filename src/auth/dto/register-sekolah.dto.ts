@@ -78,12 +78,10 @@ export class RegisterSekolahDto {
   @IsDisabilityTypesValid()
   disability_types: DisabilityTypeDto[];
 
-  @ApiPropertyOptional({ example: 'https://res.cloudinary.com/demo/image/upload/school_logo.png' })
   @IsOptional()
   @IsUrl()
   photo_url?: string;
 
-  @ApiPropertyOptional({ example: 'mbg/logos/school_456' })
   @IsOptional()
   @IsString()
   cloudinary_public_id?: string;
