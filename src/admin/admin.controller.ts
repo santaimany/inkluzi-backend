@@ -1,34 +1,46 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { CreateAdminDto } from './dto/create-admin.dto';
-import { UpdateAdminDto } from './dto/update-user-status.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { GetUsersQueryDto } from './dto/get-users-query.dto';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorators';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Admin - User Management')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin')
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
-  @Post()
-  create(@Body() createAdminDto: CreateAdminDto) {
-    return this.adminService.create(createAdminDto);
+  @Get('users')
+  @ApiProperty({ description: 'Mengambil semua pengguna dengan filter dan paginasi' })
+  @ApiResponse({ status: 200, description: 'Berhasil mengambil pengguna.' })
+  async getAllUsers(@Query() query: GetUsersQueryDto) {
+    const result = await this.adminService.getAllUsers(query);
+    return {
+      success: true,
+      message: 'Data users berhasil diambil',
+      ...result,
+    };
   }
 
-  @Get()
-  findAll() {
-    return this.adminService.findAll();
+  @Get('users/:user_id')
+  @ApiOperation({
+    summary: 'Get user detail',
+    description: 'Get detailed information about a specific user',
+  })
+  @ApiParam({ name: 'user_id', type: 'string', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getUserDetail(@Param('user_id') userId: string) {
+    const data = await this.adminService.getUserDetail(userId);
+    return {
+      success: true,
+      message: 'Data user berhasil diambil',
+      data,
+    };
   }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.adminService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAdminDto: UpdateAdminDto) {
-    return this.adminService.update(+id, updateAdminDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.adminService.remove(+id);
-  }
+  
 }
