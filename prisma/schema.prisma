@@ -128,7 +128,7 @@ model SchoolProfile {
 
   // Relations
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sppgProfile      SppgProfile       @relation(fields: [sppgId], references: [id])
+  sppgProfile      SppgProfile?       @relation(fields: [sppgId], references: [id])
   disabilityTypes  DisabilityType[]
   menuAssignments  MenuAssignment[]
   foodScans        FoodScan[]

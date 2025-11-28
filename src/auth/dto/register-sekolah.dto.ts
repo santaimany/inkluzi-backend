@@ -1,7 +1,24 @@
-import { IsEmail, IsString, MinLength, IsOptional, IsUrl, IsUUID, IsInt, Min } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsOptional, IsUrl, IsUUID, IsInt, Min, IsArray, ValidateNested } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { IsDisabilityTypesValid } from './validators/disability-types.validator';
 
+
+export class DisabilityTypeDto {
+  @ApiProperty({
+    example: 'Tunarungu'
+  })
+  @IsString()
+  jenis_disabilitas: string;
+
+  @ApiProperty({
+    example: 25
+  })
+  @IsInt()
+  @Min(0)
+  @Type(() => Number)
+  jumlah_siswa: number;
+}
 export class RegisterSekolahDto {
   @ApiProperty({ example: 'sekolah@example.com' })
   @IsEmail()
@@ -45,6 +62,20 @@ export class RegisterSekolahDto {
   @ApiProperty({ example: '+6281234567891' })
   @IsString()
   nomor_kontak: string;
+
+  @ApiProperty({
+    type: [DisabilityTypeDto],
+    example: [
+      { jenis_disabilitas: 'Tunarungu', jumlah_siswa: 25 }, 
+      { jenis_disabilitas: 'Tunadaksa', jumlah_siswa: 10 },]
+  })
+  @IsArray()
+  @ValidateNested({
+    each: true,
+  })
+  @Type(() => DisabilityTypeDto)
+  @IsDisabilityTypesValid()
+  disability_types: DisabilityTypeDto[];
 
   @ApiPropertyOptional({ example: 'https://res.cloudinary.com/demo/image/upload/school_logo.png' })
   @IsOptional()
