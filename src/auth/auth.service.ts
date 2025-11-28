@@ -4,6 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RegisterSppgDto } from './dto/register-sppg.dto';
+import { RegisterSekolahDto } from './dto/register-sekolah.dto';
 
 @Injectable()
 export class AuthService {
@@ -49,7 +50,52 @@ export class AuthService {
         status: user.status,
       },
   }
-    
+  }
+
+  async registerSekolah(dto: RegisterSekolahDto) {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.email},
+    })
+
+    if(existingUser) {
+      throw new ConflictException('Email sudah terdaftar');
+    }
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        passwordHash: hashedPassword,
+        role: 'sekolah',
+        status: 'pending',
+        schoolProfile: {
+          create: {
+            namaSekolah: dto.nama_sekolah,
+            npsn: dto.npsn,
+            jenisSekolah: dto.jenis_sekolah,
+            alamat: dto.alamat,
+            totalSiswa: dto.total_siswa,
+            penanggungJawab: dto.penanggung_jawab,
+            nomorKontak: dto.nomor_kontak,
+            disabilityTypes: {
+              create: dto.disability_types.map(dt => ({
+                jenisDisabilitas: dt.jenis_disabilitas,
+                jumlahSiswa: dt.jumlah_siswa,
+              })),
+            }
+          },
+        },
+      }
+    })
+
+    return {
+      success: true,
+      message: 'User registered successfully',
+      data: {
+        user_id: user.id,
+        status: user.status,
+    }
+  }
   }
 
   
