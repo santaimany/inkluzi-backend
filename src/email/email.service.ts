@@ -6,20 +6,50 @@ import { ConfigService } from '@nestjs/config';
 export class EmailService {
   private transporter: nodemailer.Transporter;
   private readonly logger = new Logger(EmailService.name);
+  private emailEnabled: boolean;
 
-  constructor(private configService: ConfigService) {
+  constructor(private readonly configService: ConfigService) {
+    const smtpHost = this.configService.get('SMTP_HOST');
+    const smtpUser = this.configService.get('SMTP_USER');
+    
+    // Check if email is configured
+    if (!smtpHost || !smtpUser) {
+      this.logger.warn('Email not configured. Email notifications will be disabled.');
+      this.emailEnabled = false;
+      return;
+    }
+
+    this.emailEnabled = true;
+    
+    const smtpPort = this.configService.get<number>('SMTP_PORT', 587);
+    
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get('SMTP_HOST'),
-      port: this.configService.get('SMTP_PORT'),
-      secure: false, // true for 465, false for other ports
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465, // true for 465, false for other ports
       auth: {
-        user: this.configService.get('SMTP_USER'),
+        user: smtpUser,
         pass: this.configService.get('SMTP_PASS'),
       },
+    });
+
+    // Verify connection configuration
+    this.transporter.verify((error) => {
+      if (error) {
+        this.logger.error('SMTP connection error:', error);
+        this.emailEnabled = false;
+      } else {
+        this.logger.log('SMTP server is ready to send emails');
+      }
     });
   }
 
   async sendAccountActivationEmail(email: string, name: string, role: string): Promise<void> {
+    if (!this.emailEnabled) {
+      this.logger.warn(`Email disabled - would have sent activation email to: ${email}`);
+      return;
+    }
+
     try {
       const mailOptions = {
         from: `"MBG System" <${this.configService.get('SMTP_FROM')}>`,
@@ -75,6 +105,11 @@ export class EmailService {
   }
 
   async sendAccountDeactivationEmail(email: string, name: string, role: string): Promise<void> {
+    if (!this.emailEnabled) {
+      this.logger.warn(`Email disabled - would have sent deactivation email to: ${email}`);
+      return;
+    }
+
     try {
       const mailOptions = {
         from: `"MBG System" <${this.configService.get('SMTP_FROM')}>`,
