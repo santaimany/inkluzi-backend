@@ -5,6 +5,8 @@ import { ApiOperation, ApiResponse as SwaggerResponse, ApiTags } from '@nestjs/s
 import { RegisterSppgDto } from './dto/register-sppg.dto';
 import { RegisterSekolahDto } from './dto/register-sekolah.dto';
 import { LoginDto } from './dto/login.dto';
+import { RefreshToken } from 'generated/prisma';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -80,8 +82,6 @@ export class AuthController {
             email: 'string',
             role: 'sppg | sekolah',
             status: 'active | pending | inactive',
-            sppgProfile: { /* jika role sppg */ },
-            schoolProfile: { /* jika role sekolah */ }
           },
           access_token: 'jwt-access-token',
           refresh_token: 'jwt-refresh-token'
@@ -92,6 +92,31 @@ export class AuthController {
   @SwaggerResponse({ status: 401, description: 'Email atau password salah' })
   async login(@Body() dto: LoginDto) {
     return await this.authService.login(dto);
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Refresh Token',
+    description: 'Mendapatkan access token baru menggunakan refresh token'
+  })
+  @SwaggerResponse({
+    status: 200,
+    description: 'Token refreshed successfully',
+    schema: {
+      example: {
+        success: true,
+        message: 'Token refreshed successfully',
+        data: {
+          access_token: 'new-jwt-access-token',
+          refresh_token: 'new-jwt-refresh-token'
+        }
+      }
+    }
+  })
+  @SwaggerResponse({ status: 401, description: 'Refresh token tidak valid atau sudah kadaluarsa' })
+  async refresh(@Body() dto: RefreshTokenDto) {
+    return await this.authService.refreshToken(dto.refresh_token);
   }
 
 
