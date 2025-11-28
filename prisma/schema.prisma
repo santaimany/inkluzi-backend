@@ -113,7 +113,7 @@ model SppgProfile {
 model SchoolProfile {
   id                 String   @id @default(uuid()) @db.Uuid
   userId             String   @unique @map("user_id") @db.Uuid
-  sppgId             String   @map("sppg_id") @db.Uuid
+  sppgId             String?   @map("sppg_id") @db.Uuid
   namaSekolah        String   @map("nama_sekolah") @db.VarChar(255)
   npsn               String   @unique @db.VarChar(20)
   jenisSekolah       String   @map("jenis_sekolah") @db.VarChar(50)
