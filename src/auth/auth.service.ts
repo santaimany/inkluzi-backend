@@ -176,12 +176,29 @@ export class AuthService {
   }
 
   async logout(userId: string, refreshToken: string) {
-    await this.prisma.refreshToken.deleteMany({
-      where: {
-        userId: userId,
-        token: refreshToken,
+     if(!refreshToken) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+     const storedToken = await this.prisma.refreshToken.findFirst({
+    where: {
+      userId: userId,
+      token: refreshToken,
+      expiresAt: {
+        gt: new Date(), // Token belum expired
       }
-    })
+    }
+  });
+
+  if (!storedToken) {
+    throw new UnauthorizedException('Refresh token tidak valid atau sudah logout');
+  }
+
+  await this.prisma.refreshToken.delete({
+    where: {
+      id: storedToken.id,
+    }
+  });
+   
 
     return {
       success: true,
