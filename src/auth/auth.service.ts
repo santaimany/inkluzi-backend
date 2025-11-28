@@ -127,35 +127,6 @@ export class AuthService {
       created_at: user.createdAt.toISOString(),
     };
 
-    // Add profile based on role
-    if (user.sppgProfile) {
-      userData.sppg_profile = {
-        id: user.sppgProfile.id,
-        nama_instansi: user.sppgProfile.namaInstansi,
-        wilayah_kerja: user.sppgProfile.wilayahKerja,
-        alamat: user.sppgProfile.alamat,
-        penanggung_jawab: user.sppgProfile.penanggungJawab,
-        nomor_kontak: user.sppgProfile.nomorKontak,
-        photo_url: user.sppgProfile.photoUrl,
-        cloudinary_public_id: user.sppgProfile.cloudinaryPublicId,
-      };
-    }
-
-    if (user.schoolProfile) {
-      userData.school_profile = {
-        id: user.schoolProfile.id,
-        sppg_id: user.schoolProfile.sppgId,
-        nama_sekolah: user.schoolProfile.namaSekolah,
-        npsn: user.schoolProfile.npsn,
-        jenis_sekolah: user.schoolProfile.jenisSekolah,
-        alamat: user.schoolProfile.alamat,
-        total_siswa: user.schoolProfile.totalSiswa,
-        penanggung_jawab: user.schoolProfile.penanggungJawab,
-        nomor_kontak: user.schoolProfile.nomorKontak,
-        photo_url: user.schoolProfile.photoUrl,
-        cloudinary_public_id: user.schoolProfile.cloudinaryPublicId,
-      };
-    }
 
     return {
       success: true,
