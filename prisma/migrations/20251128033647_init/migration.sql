@@ -55,7 +55,7 @@ CREATE TABLE "sppg_profiles" (
 CREATE TABLE "school_profiles" (
     "id" UUID NOT NULL,
     "user_id" UUID NOT NULL,
-    "sppg_id" UUID NOT NULL,
+    "sppg_id" UUID,
     "nama_sekolah" VARCHAR(255) NOT NULL,
     "npsn" VARCHAR(20) NOT NULL,
     "jenis_sekolah" VARCHAR(50) NOT NULL,
@@ -184,7 +184,7 @@ ALTER TABLE "sppg_profiles" ADD CONSTRAINT "sppg_profiles_user_id_fkey" FOREIGN 
 ALTER TABLE "school_profiles" ADD CONSTRAINT "school_profiles_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "school_profiles" ADD CONSTRAINT "school_profiles_sppg_id_fkey" FOREIGN KEY ("sppg_id") REFERENCES "sppg_profiles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "school_profiles" ADD CONSTRAINT "school_profiles_sppg_id_fkey" FOREIGN KEY ("sppg_id") REFERENCES "sppg_profiles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "disability_types" ADD CONSTRAINT "disability_types_school_profiles_id_fkey" FOREIGN KEY ("school_profiles_id") REFERENCES "school_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["inkluzi-db"]  // ← TAMBAHKAN INI
 }
 
 // ============================================
@@ -17,7 +16,7 @@ enum UserRole {
   sppg
   sekolah
 
-  @@schema("inkluzi-db")  // ← TAMBAHKAN di setiap enum
+    // ← TAMBAHKAN di setiap enum
 }
 
 enum UserStatus {
@@ -25,14 +24,14 @@ enum UserStatus {
   active
   inactive
 
-  @@schema("inkluzi-db")
+  
 }
 
 enum ReportStatus {
   processing
   completed
 
-  @@schema("inkluzi-db")
+  
 }
 
 enum StatusKeamanan {
@@ -40,7 +39,7 @@ enum StatusKeamanan {
   perlu_perhatian
   tidak_aman
 
-  @@schema("inkluzi-db")
+  
 }
 
 // ============================================
@@ -62,7 +61,7 @@ model User {
   schoolProfile SchoolProfile?
 
   @@map("users")
-  @@schema("inkluzi-db")  // ← TAMBAHKAN di setiap model
+    // ← TAMBAHKAN di setiap model
 }
 
 model RefreshToken {
@@ -76,7 +75,7 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
-  @@schema("inkluzi-db")
+  
 }
 
 // ============================================
@@ -103,7 +102,7 @@ model SppgProfile {
   reports        Report[]
 
   @@map("sppg_profiles")
-  @@schema("inkluzi-db")
+  
 }
 
 // ============================================
@@ -135,7 +134,7 @@ model SchoolProfile {
   reports          Report[]
 
   @@map("school_profiles")
-  @@schema("inkluzi-db")
+  
 }
 
 model DisabilityType {
@@ -149,7 +148,7 @@ model DisabilityType {
   schoolProfile SchoolProfile @relation(fields: [schoolProfileId], references: [id], onDelete: Cascade)
 
   @@map("disability_types")
-  @@schema("inkluzi-db")
+  
 }
 
 // ============================================
@@ -180,7 +179,7 @@ model Menu {
 
   @@index([sppgId, tanggalDisajikan])
   @@map("menus")
-  @@schema("inkluzi-db")
+  
 }
 
 model MenuAssignment {
@@ -195,7 +194,7 @@ model MenuAssignment {
 
   @@unique([menuId, sekolahId])
   @@map("menu_assignments")
-  @@schema("inkluzi-db")
+  
 }
 
 // ============================================
@@ -223,7 +222,7 @@ model FoodScan {
 
   @@index([sekolahId, scannedAt])
   @@map("food_scans")
-  @@schema("inkluzi-db")
+  
 }
 
 // ============================================
@@ -251,5 +250,5 @@ model Report {
   @@index([sekolahId, status])
   @@index([sppgId, status])
   @@map("reports")
-  @@schema("inkluzi-db")
+  
 }
