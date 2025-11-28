@@ -1,11 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, Request, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 import { ApiOperation, ApiResponse as SwaggerResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { RegisterSppgDto } from './dto/register-sppg.dto';
 import { RegisterSekolahDto } from './dto/register-sekolah.dto';
 import { LoginDto } from './dto/login.dto';
-import { RefreshToken } from 'generated/prisma';
+
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 

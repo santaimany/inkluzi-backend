@@ -6,7 +6,6 @@ import { ConfigService } from '@nestjs/config';
 import { RegisterSppgDto } from './dto/register-sppg.dto';
 import { RegisterSekolahDto } from './dto/register-sekolah.dto';
 import { LoginDto } from './dto/login.dto';
-import { ApiResponse } from 'src/common/interfaces/api-response.interface';
 
 @Injectable()
 export class AuthService {
