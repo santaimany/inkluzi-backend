@@ -53,14 +53,15 @@ export class AuthService {
   }
 
   async registerSekolah(dto: RegisterSekolahDto) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: dto.email},
+    await this.checkEmailAvailability(dto.email);
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const npsn = await this.prisma.schoolProfile.findUnique({
+      where: { npsn: dto.npsn }
     })
 
-    if(existingUser) {
-      throw new ConflictException('Email sudah terdaftar');
+    if(npsn) {
+      throw new ConflictException('NPSN sudah terdaftar');
     }
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     const user = await this.prisma.user.create({
       data: {
@@ -78,24 +79,24 @@ export class AuthService {
             penanggungJawab: dto.penanggung_jawab,
             nomorKontak: dto.nomor_kontak,
             disabilityTypes: {
-              create: dto.disability_types.map(dt => ({
+              create: dto.disability_types.map((dt) => ({
                 jenisDisabilitas: dt.jenis_disabilitas,
                 jumlahSiswa: dt.jumlah_siswa,
               })),
-            }
+            },
           },
         },
-      }
-    })
+      },
+      select: { id: true, email: true, role: true, status: true },
+    });
 
-    return {
-      success: true,
-      message: 'User registered successfully',
-      data: {
-        user_id: user.id,
-        status: user.status,
-    }
+    return user;
   }
+
+
+  private async checkEmailAvailability(email: string) {
+    const existingUser = await this.prisma.user.findUnique({ where: { email } });
+    if (existingUser) throw new ConflictException('Email sudah terdaftar');
   }
 
   
