@@ -5,6 +5,7 @@ import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorators';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 
 @ApiTags('Admin - User Management')
 @ApiBearerAuth()
@@ -40,6 +41,26 @@ export class AdminController {
       success: true,
       message: 'Data user berhasil diambil',
       data,
+    };
+  }
+
+
+  @Patch('users/:user_id')
+    @ApiOperation({
+    summary: 'Update user status',
+    description: 'Update user status (active/inactive) and send email notification',
+  })
+  @ApiParam({ name: 'user_id', type: 'string', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Status updated' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async updateUserStatus(
+    @Param('user_id') userId: string,
+    @Body() dto: UpdateUserStatusDto,
+  ){
+    const result = await this.adminService.updateUserStatus(userId, dto);
+    return {
+      success: true,
+      ...result,
     };
   }
   

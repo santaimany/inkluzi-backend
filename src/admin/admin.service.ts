@@ -1,7 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { EmailService } from 'src/email/email.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
+import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 @Injectable()
 export class AdminService {
   constructor(
@@ -176,7 +177,6 @@ export class AdminService {
    
 
     return {
-     
         id: user.id,
         email: user.email,
         role: user.role,
@@ -184,7 +184,72 @@ export class AdminService {
         created_at: user.createdAt,
         profile_data: profileData,
     };
-
-
   } 
+
+  async updateUserStatus(userId: string, dto: UpdateUserStatusDto){
+    const user = await this.prisma.user.findUnique({
+      where: {id: userId},
+      include: {
+        sppgProfile: true,
+        schoolProfile: true,
+      }
+    })
+
+    if(!user) {
+      throw new NotFoundException('User tidak ditemukan')
+    }
+    if(user.role === 'admin') {
+      throw new ForbiddenException('Tidak dapat mengubah status user admin');
+    }
+
+    const oldStatus = user.status;
+
+    await this.prisma.user.update({
+      where: {id: userId},
+      data: {
+        status: dto.status,
+      }
+    })
+
+    if(oldStatus !== dto.status) {
+      const profileName = user.role === 'sppg' ? user.sppgProfile?.namaInstansi : user.schoolProfile?.namaSekolah;
+      if (dto.status === 'active') {
+        await this.emailService.sendAccountActivationEmail(
+          user.email,
+          profileName || user.email,
+          user.role
+        )
+      } else if(dto.status === 'inactive') {
+        await this.emailService.sendAccountDeactivationEmail(
+          user.email,
+          profileName || user.email,
+          user.role
+        )
+      }
+    }
+
+    return {
+      message: `Status user berhasil diubah menjadi ${dto.status}`,
+    }
+  }
+
+  async deleteUser(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {id: userId},
+    });
+    if(!user) {
+      throw new NotFoundException('User tidak ditemukan');
+    }
+    if(user.role === 'admin') {
+      throw new ForbiddenException('Tidak dapat menghapus user admin');
+    }
+
+    await this.prisma.user.delete({
+      where: {id: userId},
+    });
+
+    return {
+      message: 'User berhasil dihapus',
+    }
+  }
 }
