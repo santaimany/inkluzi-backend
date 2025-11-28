@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
@@ -58,6 +58,19 @@ export class AdminController {
     @Body() dto: UpdateUserStatusDto,
   ){
     const result = await this.adminService.updateUserStatus(userId, dto);
+    return {
+      success: true,
+      ...result,
+    };
+  }
+
+  @Delete('users/:user_id')
+  @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Delete user' })
+  @ApiParam({ name: 'user_id', type: 'string', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'User deleted' })
+  async deleteUser(@Param('user_id') userId: string) {
+    const result = await this.adminService.deleteUser(userId);
     return {
       success: true,
       ...result,
