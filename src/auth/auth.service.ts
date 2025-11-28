@@ -15,12 +15,7 @@ export class AuthService {
   ){ }
 
   async registerSppg(dto: RegisterSppgDto) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: dto.email}
-    })
-    if (existingUser) {
-    throw new ConflictException('Email sudah terdaftar');
-  }
+   await this.checkEmailAvailability(dto.email);
 
   const hashedPassword = await bcrypt.hash(dto.password, 10);
 
@@ -93,6 +88,10 @@ export class AuthService {
     return user;
   }
 
+  
+  //+++++++++++++++++++++++++++++++++++
+  // Helper Methods
+  //+++++++++++++++++++++++++++++++++++
 
   private async checkEmailAvailability(email: string) {
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
