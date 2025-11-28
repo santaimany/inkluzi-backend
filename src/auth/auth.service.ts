@@ -36,9 +36,6 @@ export class AuthService {
           alamat: dto.alamat,
           penanggungJawab: dto.penanggung_jawab,
           nomorKontak: dto.nomor_kontak,
-          photoUrl: dto.photo_url,
-          cloudinaryPublicId: dto.cloudinary_public_id,
-
         },
       },
     },
