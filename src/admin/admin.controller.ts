@@ -6,6 +6,8 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorators';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { AssignSchoolsDto } from './dto/assign-schools.dto';
+import { AdminAssignService } from './admin.assign.service';
 
 @ApiTags('Admin - User Management')
 @ApiBearerAuth()
@@ -13,7 +15,7 @@ import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 @Roles('admin')
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(private readonly adminService: AdminService, private readonly adminAssignService: AdminAssignService) {}
 
   @Get('users')
   @ApiProperty({ description: 'Mengambil semua pengguna dengan filter dan paginasi' })
@@ -76,5 +78,31 @@ export class AdminController {
       ...result,
     };
   }
+
+  @Post('sppg/:sppg_id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Assign schools to SPPG' })
+  @ApiParam({ name: 'sppg_id', type: 'string', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Schools assigned successfully' })
+  async assignSchoolsToSppg(@Param('sppg_id') sppgId: string, @Body() dto: AssignSchoolsDto) {
+    const result = await this.adminAssignService.assignSchoolsToSppg(sppgId, dto);
+    return {
+      success: true,
+      ...result
+    }
+  }
   
+  @Delete('schools/:school_id')
+    @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Unassign school from SPPG' })
+  @ApiParam({ name: 'school_id', type: 'string', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'School unassigned successfully' })
+  async unassignSchoolsFromSppg(@Param('school_id' ) schoolId: string) {
+    const result = await this.adminAssignService.unassignSchoolsFromSppg(schoolId);
+    return {
+      success: true,
+      ...result
+    }
+  }
+
 }
