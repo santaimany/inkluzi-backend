@@ -209,7 +209,7 @@ model FoodScan {
   
   // ML Predictions
   namaMakanan        String?         @map("nama_makanan") @db.VarChar(255)
-  komponenMenu       String?         @map("komponen_menu") @db.Text
+  komponenMenu       Json?         @map("komponen_menu") 
   kandunganGizi      Json?           @map("kandungan_gizi")
   deteksiRisiko      Json?           @map("deteksi_risiko")
   rekomendasi        String?         @db.Text
