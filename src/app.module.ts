@@ -9,6 +9,7 @@ import { AuthController } from './auth/auth.controller';
 import { ProfileModule } from './profile/profile.module';
 import { AdminModule } from './admin/admin.module';
 import { EmailModule } from './email/email.module';
+import { FoodScanModule } from './food-scan/food-scan.module';
 
 @Module({
   imports: [
@@ -18,8 +19,9 @@ import { EmailModule } from './email/email.module';
     ProfileModule,
     AdminModule,
     EmailModule,
+    FoodScanModule,
   ],
   controllers: [AppController, AuthController],
-  providers: [MlService, AppService],
+  providers: [AppService],
 })
 export class AppModule {}
