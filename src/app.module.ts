@@ -10,6 +10,7 @@ import { ProfileModule } from './profile/profile.module';
 import { AdminModule } from './admin/admin.module';
 import { EmailModule } from './email/email.module';
 import { FoodScanModule } from './food-scan/food-scan.module';
+import { SppgSchoolsModule } from './sppg-schools/sppg-schools.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { FoodScanModule } from './food-scan/food-scan.module';
     AdminModule,
     EmailModule,
     FoodScanModule,
+    SppgSchoolsModule,
   ],
   controllers: [AppController, AuthController],
   providers: [AppService],
