@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetSchoolsQueryDto } from './dto/get-schools-quey.dto';
-import { isUUID, IsUUID } from 'class-validator';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class SppgSchoolsService {
@@ -53,6 +53,7 @@ export class SppgSchoolsService {
                 user_id: school.userId,
                 nama_sekolah: school.namaSekolah,
                 photo_url: school.photoUrl,
+                total_schools: total,
             }))
         }
      }
