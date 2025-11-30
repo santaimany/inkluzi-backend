@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { MlService } from 'src/ml/ml.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SaveScanResultDto } from './dto/save-scan-result.dto';
+import { GetScanHistoryQueryDto } from './dto/get-scan-history-query.dto';
 
 @Injectable()
 export class FoodScanService {
@@ -100,4 +101,134 @@ async saveScanResult(userId: string, dto: SaveScanResultDto) {
     },
   }
 }
+
+
+async getScanHistory(userId: string, query: GetScanHistoryQueryDto) {
+    const { page = 1, limit = 10 } = query;
+
+    const skip = (page - 1) * limit;
+
+    const schoolProfile = await this.prisma.schoolProfile.findUnique({
+        where: { userId },
+        select: { id: true },
+    })
+
+    if (!schoolProfile) {
+        throw new NotFoundException('Profil sekolah tidak ditemukan');
+    }
+
+    const total = await this.prisma.foodScan.count ({
+        where: { sekolahId: schoolProfile.id},
+    })
+
+    const scans = await this.prisma.foodScan.findMany({
+        where: { sekolahId: schoolProfile.id },
+        select: {
+            id: true,
+            namaMakanan: true,
+            scannedAt: true,
+        },
+        orderBy: {
+            scannedAt: 'desc',
+        },
+        skip,
+        take: limit,
+    })
+
+    return {
+        success: true,
+        message: 'Riwayat scan berhasil diambil',
+        data: {
+            scans: scans.map((scan) => ({
+                id: scan.id,
+                nama_makanan: scan.namaMakanan,
+                scanned_at: scan.scannedAt,
+            })),
+            pagination: {
+                total,
+                page,
+                limit,
+                total_pages: Math.ceil(total / limit),
+            },
+        },
+    }
+}
+
+async getScanDetail(userId: string, scanId: string) {
+    const schoolProfile = await this.prisma.schoolProfile.findUnique({
+        where: { userId },
+        select: { id: true },
+    })
+
+    if (!schoolProfile) {
+        throw new NotFoundException('Profil sekolah tidak ditemukan');
+    }
+
+    const scan = await this.prisma.foodScan.findUnique({
+        where: { id: scanId },
+    })
+
+    if(!scan ){
+        throw new NotFoundException('Hasil scan tidak ditemukan');
+    }
+
+    if(scan.sekolahId !== schoolProfile.id){
+        throw new ForbiddenException('Anda tidak memiliki akses ke hasil scan ini');
+    }
+
+    return {
+        success: true,
+        message: 'Detail hasil scan berhasil diambil',
+        data: {
+            id: scan.id,
+            image_url: scan.imageUrl,
+            nama_makanan: scan.namaMakanan,
+            komponen_menu: scan.komponenMenu,
+            kandungan_gizi: scan.kandunganGizi,
+            deteksi_risiko: scan.deteksiRisiko,
+            rekomendasi: scan.rekomendasi,
+            ml_confidence: scan.mlConfidence,
+            scanned_at: scan.scannedAt,
+        },
+    }
+}
+
+ async deleteScan(userId: string, scanId: string) {
+    const schoolProfile = await this.prisma.schoolProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (!schoolProfile) {
+      throw new NotFoundException('Profil sekolah tidak ditemukan');
+    }
+
+    const scan = await this.prisma.foodScan.findUnique({
+      where: { id: scanId },
+    });
+
+    if (!scan) {
+      throw new NotFoundException('Hasil scan tidak ditemukan');
+    }
+
+
+    if (scan.sekolahId !== schoolProfile.id) {
+      throw new ForbiddenException('Anda tidak memiliki akses ke scan ini');
+    }
+
+
+    if (scan.cloudinaryPublicId) {
+      await this.cloudinary.deleteImage(scan.cloudinaryPublicId);
+    }
+
+ 
+    await this.prisma.foodScan.delete({
+      where: { id: scanId },
+    });
+
+    return {
+      success: true,
+      message: 'Hasil scan berhasil dihapus',
+    };
+  }
 }
