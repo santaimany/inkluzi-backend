@@ -12,10 +12,8 @@ export class FoodScanService {
         private readonly mlService: MlService
     ){}
 
-  // food-scan.service.ts
-
 async analyzeFoodOnly(userId: string, file: Express.Multer.File) {
-  // 1. Cari school profile user
+
   const schoolProfile = await this.prisma.schoolProfile.findUnique({
     where: { userId },
     include: {
@@ -32,17 +30,16 @@ async analyzeFoodOnly(userId: string, file: Express.Multer.File) {
     throw new NotFoundException('Profil sekolah tidak ditemukan');
   }
 
-  // 2. Upload gambar ke Cloudinary
+  
   const uploadResult = await this.cloudinary.uploadImage(file, 'food-scans');
 
   try {
-    // 3. Kirim ke ML service (Gemini) untuk analisis
+ 
     const mlResult = await this.mlService.analyzeFoodImage(
       uploadResult.secure_url,
       schoolProfile.disabilityTypes,
     )
 
-    // 4. Return hasil TANPA save ke database
     return {
       success: true,
       message: 'Makanan berhasil di-scan. Review hasil sebelum menyimpan.',
@@ -58,14 +55,12 @@ async analyzeFoodOnly(userId: string, file: Express.Multer.File) {
       },
     }
   } catch (error) {
-    // Jika ML gagal, hapus gambar dari Cloudinary
     await this.cloudinary.deleteImage(uploadResult.public_id);
     throw error;
   }
 }
 
 async saveScanResult(userId: string, dto: SaveScanResultDto) {
-  // 1. Cari school profile user
   const schoolProfile = await this.prisma.schoolProfile.findUnique({
     where: { userId },
     select: { id: true },
@@ -75,7 +70,6 @@ async saveScanResult(userId: string, dto: SaveScanResultDto) {
     throw new NotFoundException('Profil sekolah tidak ditemukan');
   }
 
-  // 2. Save hasil yang sudah di-review/edit user ke database
   const foodScan = await this.prisma.foodScan.create({
     data: {
       sekolahId: schoolProfile.id,
@@ -90,7 +84,6 @@ async saveScanResult(userId: string, dto: SaveScanResultDto) {
     }
   })
 
-  // 3. Return response
   return {
     success: true,
     message: 'Hasil scan berhasil disimpan',
