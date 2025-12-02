@@ -1,8 +1,9 @@
-import { Injectable, Logger, HttpException } from '@nestjs/common';
+import { Injectable, Logger, HttpException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import axios from 'axios';
-import { MlAnalysisResult } from './interfaces/ml.interface';
+import { MenuAnalysisResult, MlAnalysisResult } from './interfaces/ml.interface';
+import { KomponenMenuDto } from 'src/sppg-menus/dto/create-menu.dto';
 
 @Injectable()
 export class MlService {
@@ -201,4 +202,158 @@ PENTING:
       );
     }
   }
+
+ // src/ml/ml.service.ts - method analyzeMenu saja
+
+async analyzeMenu(
+  menuName: string,
+  components: Array<{ nama: string; porsi: string }>,
+  disabilityTypes: string[]
+): Promise<MenuAnalysisResult> {
+  try {
+    this.logger.log('Starting menu analysis with Gemini AI');
+
+    // Build component list string
+    const componentsList = components
+      .map(c => `- ${c.nama}: ${c.porsi}`)
+      .join('\n');
+
+    // Build comprehensive prompt for menu analysis
+    const prompt = `Kamu adalah ahli nutrisi dan keamanan pangan untuk anak-anak dengan disabilitas.
+
+**DATA MENU:**
+Nama Menu: ${menuName}
+
+**KOMPONEN MAKANAN:**
+${componentsList}
+
+**TIPE DISABILITAS ANAK:**
+${disabilityTypes.length > 0 ? disabilityTypes.join(', ') : 'Tidak ada data spesifik'}
+
+**STANDAR ANGKA KECUKUPAN GIZI (AKG) ANAK USIA 7-12 TAHUN:**
+- Energi: 2000 kkal/hari (untuk 1 kali makan ±600-700 kkal)
+- Karbohidrat: 300g/hari
+- Protein: 66g/hari
+- Lemak: 65g/hari
+- Serat: 30g/hari
+- Natrium: max 2300mg/hari
+
+**INSTRUKSI ANALISIS:**
+
+1. **HITUNG KANDUNGAN GIZI** total dari semua komponen:
+   - Kalori total (kkal)
+   - Karbohidrat (gram)
+   - Protein (gram)
+   - Lemak (gram)
+   - Gula (gram)
+   - Serat (gram)
+   - Sodium (mg)
+
+2. **DETEKSI RISIKO** yang dikelompokkan dalam 3 kategori:
+   
+   a. **ALERGI:**
+      - Identifikasi bahan yang berpotensi menyebabkan alergi
+      - Contoh: "Tidak ada bahan dengan potensi alergi tinggi."
+      - Atau: "Mengandung seafood, perlu perhatian untuk alergi ikan."
+   
+   b. **TEKSTUR:**
+      - Evaluasi tekstur makanan untuk anak dengan disabilitas
+      - Contoh: "Ikan empuk → aman untuk siswa sensitif tekstur."
+      - Atau: "Tekstur bervariasi, cocok untuk stimulasi sensorik."
+   
+   c. **PORSI_GIZI:**
+      - Evaluasi kecukupan gizi dibanding AKG
+      - Contoh: "Semua porsi gizi berada dalam rentang standar MBG."
+      - Atau: "Kalori tinggi (800 kkal), melebihi standar 1 kali makan."
+      - Berikan warning jika ada kelebihan/kekurangan signifikan
+
+3. **REKOMENDASI:**
+   - Berikan saran perbaikan jika ada risiko (maksimal 2 kalimat)
+   - Atau konfirmasi menu sudah sesuai
+   - Contoh: "Tidak memerlukan tindakan khusus, menu aman untuk semua kelompok siswa."
+
+4. **STATUS AMAN:**
+   - "aman" jika tidak ada risiko signifikan
+   - "perlu_perhatian" jika ada risiko yang perlu diperhatikan tapi masih bisa dikonsumsi
+   - "tidak_aman" jika ada risiko serius dan sebaiknya tidak dikonsumsi
+
+5. **CONFIDENCE SCORE:**
+   - Berikan confidence 0-100 berdasarkan:
+     * Kelengkapan data komponen (70-100 jika lengkap)
+     * Kejelasan porsi (90-100 jika sangat jelas, 60-80 jika estimasi)
+     * Ketersediaan data nutrisi (95-100 jika makanan umum, 70-90 jika makanan khusus)
+
+**FORMAT OUTPUT (WAJIB JSON VALID):**
+{
+  "deteksi_risiko": {
+    "alergi": ["Tidak ada bahan dengan potensi alergi tinggi."],
+    "tekstur": ["Ikan empuk → aman untuk siswa sensitif tekstur."],
+    "porsi_gizi": ["Semua porsi gizi berada dalam rentang standar MBG."]
+  },
+  "kandungan_gizi": {
+    "kalori_total": 590,
+    "karbohidrat": 76,
+    "protein": 28,
+    "lemak": 14,
+    "gula": 10,
+    "serat": 7,
+    "sodium": 680
+  },
+  "rekomendasi": "Tidak memerlukan tindakan khusus, menu aman untuk semua kelompok siswa.",
+  "status_aman": "aman",
+  "confidence": 92
+}
+
+ATAU jika ada masalah:
+
+{
+  "deteksi_risiko": {
+    "alergi": ["Mengandung ikan, hindari untuk siswa dengan alergi seafood."],
+    "tekstur": ["Tumis buncis agak keras, perhatikan untuk siswa dengan masalah mengunyah."],
+    "porsi_gizi": ["Kalori tinggi (800 kkal), melebihi standar 1 kali makan.", "Sodium tinggi (1200mg), 52% dari AKG harian."]
+  },
+  "kandungan_gizi": {
+    "kalori_total": 800,
+    "karbohidrat": 95,
+    "protein": 35,
+    "lemak": 25,
+    "gula": 18,
+    "serat": 5,
+    "sodium": 1200
+  },
+  "rekomendasi": "Kurangi porsi nasi 30g dan ganti garam dengan bumbu alami. Tambahkan 50g sayuran hijau untuk meningkatkan serat.",
+  "status_aman": "perlu_perhatian",
+  "confidence": 88
+}
+
+Analisis dengan teliti dan objektif. Pastikan output adalah JSON valid yang bisa di-parse.
+
+PENTING:
+- confidence dalam skala 0-100 (integer)
+- deteksi_risiko adalah OBJECT dengan key dinamis (hanya kategori yang ada risiko)
+- Jika tidak ada risiko sama sekali, deteksi_risiko = {}
+- Setiap kategori berisi array of string
+- Rekomendasi maksimal 1 kalimat singkat atau null
+- Berikan HANYA JSON, tanpa markdown atau teks tambahan`;
+
+    const result = await this.model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text();
+
+    // Clean response
+    text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    // Parse JSON
+    const analysisData: MenuAnalysisResult = JSON.parse(text);
+
+    this.logger.log(`Menu analysis completed with confidence: ${analysisData.confidence}`);
+    return analysisData;
+
+  } catch (error) {
+    this.logger.error('Error analyzing menu with Gemini AI', error);
+    throw new BadRequestException(
+      'Gagal menganalisis menu. Silakan coba lagi.'
+    );
+  }
+}
 }
