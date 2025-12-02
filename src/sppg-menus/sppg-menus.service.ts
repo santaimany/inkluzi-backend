@@ -243,6 +243,141 @@ export class SppgMenusService {
     };
 }
 
+async getMenuDetail(sppgUserId: string, menuId: string) {
+    // Get SPPG Profile ID
+    const sppgProfile = await this.prisma.sppgProfile.findUnique({
+        where: { userId: sppgUserId },
+    });
+
+    if (!sppgProfile) {
+        throw new NotFoundException('SPPG profile tidak ditemukan');
+    }
+
+    // Get menu with all details
+    const menu = await this.prisma.menu.findUnique({
+        where: { id: menuId },
+        include: {
+            menuAssignments: {
+                include: {
+                    schoolProfile: {
+                        select: {
+                            id: true,
+                            userId: true,
+                            namaSekolah: true,
+                            disabilityTypes: true,
+                        },
+                    },
+                },
+            },
+        },
+    });
+
+    if (!menu) {
+        throw new NotFoundException('Menu tidak ditemukan');
+    }
+
+    // Verify ownership
+    if (menu.sppgId !== sppgProfile.id) {
+        throw new ForbiddenException('Anda tidak memiliki akses ke menu ini');
+    }
+
+    // Parse komponen_menu string back to array dengan porsi
+    const komponenMenuArray = menu.komponenMenu.split(', ').map(item => {
+        const match = item.match(/^(.*?)\s*\((.*?)\)$/);
+        if (match) {
+            return {
+                nama: match[1].trim(),
+                porsi: match[2].trim()
+            };
+        }
+        return {
+            nama: item,
+            porsi: ''
+        };
+    });
+
+    // Get ALL unique disability types from ALL assigned schools
+    const allDisabilityTypes = new Set<string>();
+    menu.menuAssignments.forEach(ma => {
+        ma.schoolProfile.disabilityTypes.forEach(dt => {
+            allDisabilityTypes.add(dt.jenisDisabilitas);
+        });
+    });
+
+    // Format kandungan_gizi untuk table display (sesuai gambar)
+    const kandunganGizi = menu.kandunganGizi as any;
+    const kandunganGiziTable = kandunganGizi ? [
+        { komponen: 'Kalori Total', jumlah: `${kandunganGizi.kalori_total} kkal` },
+        { komponen: 'Karbohidrat', jumlah: `${kandunganGizi.karbohidrat}g` },
+        { komponen: 'Protein', jumlah: `${kandunganGizi.protein}g` },
+        { komponen: 'Lemak', jumlah: `${kandunganGizi.lemak}g` },
+        { komponen: 'Gula', jumlah: `${kandunganGizi.gula}g` },
+        { komponen: 'Serat', jumlah: `${kandunganGizi.serat}g` },
+        { komponen: 'Sodium', jumlah: `${kandunganGizi.sodium}mg` },
+    ] : [];
+
+    // Format deteksi_risiko per kategori (sesuai gambar)
+    const deteksiRisiko = menu.deteksiRisiko as any;
+    const deteksiRisikoFormatted = {
+        alergi: deteksiRisiko?.alergi || ['Tidak ada bahan dengan potensi alergi tinggi.'],
+        tekstur: deteksiRisiko?.tekstur || ['Tekstur makanan aman untuk semua kelompok.'],
+        porsi_gizi: deteksiRisiko?.porsi_gizi || ['Semua porsi gizi berada dalam rentang standar MBG.'],
+    };
+
+    // Check if there's any warning/catatan tambahan
+    // Logika: jika ada risiko kategori lain selain 3 utama, masukkan ke catatan
+    let catatanTambahan: string | null = null;
+    if (deteksiRisiko) {
+        const extraCategories = Object.keys(deteksiRisiko).filter(
+            key => !['alergi', 'tekstur', 'porsi_gizi'].includes(key)
+        );
+        if (extraCategories.length > 0) {
+            const extraRisks: string[] = [];
+            extraCategories.forEach(cat => {
+                if (Array.isArray(deteksiRisiko[cat])) {
+                    extraRisks.push(...deteksiRisiko[cat]);
+                }
+            });
+            if (extraRisks.length > 0) {
+                catatanTambahan = extraRisks.join(' ');
+            }
+        }
+    }
+
+    // Extract hari dari tanggal
+    const tanggalFormatted = this.formatTanggalToString(menu.tanggalDisajikan);
+    const hari = tanggalFormatted.split(',')[0]; // "Senin"
+
+    return {
+        status: 'success',
+        message: 'Detail menu berhasil diambil',
+        data: {
+            menu_id: menu.id,
+            nama_menu: menu.namaMenu,
+            hari: hari, // Badge hari (Senin, Selasa, dll)
+            tanggal: tanggalFormatted, // Full format
+            status_keamanan: menu.statusKeamanan, // Badge status (aman/perlu_perhatian/tidak_aman)
+            
+            // Komponen Menu dengan porsi
+            komponen_menu: komponenMenuArray,
+            
+            // Kandungan Gizi (format table)
+            kandungan_gizi: kandunganGiziTable,
+          
+            deteksi_risiko: deteksiRisikoFormatted,
+            
+            rekomendasi: menu.rekomendasi || 'Tidak ada rekomendasi khusus.',
+            
+         
+            catatan_tambahan: catatanTambahan,
+           
+            ml_confidence: Math.round((menu.mlConfidence || 0) * 100),
+            created_at: menu.createdAt,
+            updated_at: menu.updatedAt,
+        },
+    };
+}
+
     //++++++++++++++++++++++++
     //HELPER FUNCTIONS
     //++++++++++++++++++++++++
