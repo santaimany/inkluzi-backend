@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -215,5 +216,44 @@ export class SppgMenusController {
     ) {
         const sppgUserId = req.user.userId;
         return this.sppgMenusService.getMenuDetail(sppgUserId, menuId);
+    }
+
+    
+    @ApiOperation({ 
+        summary: 'Delete menu',
+        description: 'SPPG menghapus menu dari database. Menu akan dihapus dari SEMUA sekolah yang di-assign. MenuAssignment akan cascade delete otomatis.'
+    })
+    @ApiParam({
+        name: 'menu_id',
+        type: 'string',
+        format: 'uuid',
+        description: 'Menu ID (UUID)'
+    })
+    @ApiResponse({ 
+        status: 200, 
+        description: 'Menu berhasil dihapus',
+        schema: {
+            example: {
+                status: 'success',
+                message: 'Menu berhasil dihapus dari 3 sekolah'
+            }
+        }
+    })
+    @ApiResponse({ 
+        status: 404, 
+        description: 'Menu tidak ditemukan'
+    })
+    @ApiResponse({ 
+        status: 403, 
+        description: 'Forbidden - SPPG tidak memiliki akses ke menu ini'
+    })
+    @ApiResponse({ 
+        status: 400, 
+        description: 'Bad Request - UUID tidak valid'
+    })
+    @Delete(':menu_id')
+    async deleteMenu(@Param('menu_id', new ParseUUIDPipe({ version: '4' })) menuId: string, @Req() req){
+      const sppgUserId = req.user.userId;
+      return this.sppgMenusService.deleteMenu(sppgUserId, menuId);
     }
 }

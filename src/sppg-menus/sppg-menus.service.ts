@@ -5,7 +5,8 @@ import { MlService } from 'src/ml/ml.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { GetMenusQueryDto } from './dto/get-menus-query.dto';
-
+/* TODO: 1. In case kalo ngecreate di tanggal yang sama gimana?
+*/
 @Injectable()
 export class SppgMenusService {
     constructor(
@@ -244,7 +245,7 @@ export class SppgMenusService {
 }
 
 async getMenuDetail(sppgUserId: string, menuId: string) {
-    // Get SPPG Profile ID
+
     const sppgProfile = await this.prisma.sppgProfile.findUnique({
         where: { userId: sppgUserId },
     });
@@ -253,7 +254,6 @@ async getMenuDetail(sppgUserId: string, menuId: string) {
         throw new NotFoundException('SPPG profile tidak ditemukan');
     }
 
-    // Get menu with all details
     const menu = await this.prisma.menu.findUnique({
         where: { id: menuId },
         include: {
@@ -276,12 +276,10 @@ async getMenuDetail(sppgUserId: string, menuId: string) {
         throw new NotFoundException('Menu tidak ditemukan');
     }
 
-    // Verify ownership
     if (menu.sppgId !== sppgProfile.id) {
         throw new ForbiddenException('Anda tidak memiliki akses ke menu ini');
     }
 
-    // Parse komponen_menu string back to array dengan porsi
     const komponenMenuArray = menu.komponenMenu.split(', ').map(item => {
         const match = item.match(/^(.*?)\s*\((.*?)\)$/);
         if (match) {
@@ -296,7 +294,6 @@ async getMenuDetail(sppgUserId: string, menuId: string) {
         };
     });
 
-    // Get ALL unique disability types from ALL assigned schools
     const allDisabilityTypes = new Set<string>();
     menu.menuAssignments.forEach(ma => {
         ma.schoolProfile.disabilityTypes.forEach(dt => {
@@ -304,7 +301,7 @@ async getMenuDetail(sppgUserId: string, menuId: string) {
         });
     });
 
-    // Format kandungan_gizi untuk table display (sesuai gambar)
+
     const kandunganGizi = menu.kandunganGizi as any;
     const kandunganGiziTable = kandunganGizi ? [
         { komponen: 'Kalori Total', jumlah: `${kandunganGizi.kalori_total} kkal` },
@@ -465,5 +462,45 @@ async getMenuDetail(sppgUserId: string, menuId: string) {
 
 
         return `${hari}, ${tanggal} ${bulan} ${tahun}`;
+    }
+
+    async deleteMenu(sppgUserId: string, menuId: string) {
+        const sppgProfile = await this.prisma.sppgProfile.findUnique({
+            where: { userId: sppgUserId },
+        })
+
+        if(!sppgProfile) {
+            throw new NotFoundException('SPPG profile tidak ditemukan');
+        }
+
+        const menu = await this.prisma.menu.findUnique({
+            where: {id: menuId},
+            include: {
+                menuAssignments: {
+                    include: {
+                        schoolProfile: true,
+                    }
+                },
+            }
+        })
+
+        if(!menu) {
+            throw new NotFoundException('Menu tidak ditemukan');
+        }
+
+        if(menu.sppgId !== sppgProfile.id) {
+            throw new ForbiddenException('Anda tidak memiliki akses ke menu ini');
+        }
+
+        const totalSekolah = menu.menuAssignments.length;
+
+        await this.prisma.menu.delete({
+            where: {id:menuId}
+        })
+
+        return {
+            status: 'success',
+            message: `Menu berhasil dihapus dan tidak lagi ditugaskan ke ${totalSekolah} sekolah.`,
+        }
     }
 }
