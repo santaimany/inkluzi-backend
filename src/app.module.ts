@@ -15,6 +15,7 @@ import { SppgMenusModule } from './sppg-menus/sppg-menus.module';
 import { SppgReportsModule } from './sppg-reports/sppg-reports.module';
 import { SchoolReportsModule } from './school-reports/school-reports.module';
 import { SchoolMenusModule } from './school-menus/school-menus.module';
+import { NutritionModule } from './nutrition/nutrition.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { SchoolMenusModule } from './school-menus/school-menus.module';
     SppgReportsModule,
     SchoolReportsModule,
     SchoolMenusModule,
+    NutritionModule,
   ],
   controllers: [AppController, AuthController],
   providers: [AppService],
