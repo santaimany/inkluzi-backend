@@ -13,6 +13,7 @@ import { FoodScanModule } from './food-scan/food-scan.module';
 import { SppgSchoolsModule } from './sppg-schools/sppg-schools.module';
 import { SppgMenusModule } from './sppg-menus/sppg-menus.module';
 import { SppgReportsModule } from './sppg-reports/sppg-reports.module';
+import { SchoolReportsModule } from './school-reports/school-reports.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { SppgReportsModule } from './sppg-reports/sppg-reports.module';
     SppgSchoolsModule,
     SppgMenusModule,
     SppgReportsModule,
+    SchoolReportsModule,
   ],
   controllers: [AppController, AuthController],
   providers: [AppService],
