@@ -21,9 +21,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/features/auth/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/features/auth/guards/roles.guard';
-import { Roles } from 'src/features/auth/decorators/roles.decorators';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
+import { Roles } from 'src/modules/auth/decorators/roles.decorators';
 import { GetMenusQueryDto } from './dto/get-menus-query.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
 

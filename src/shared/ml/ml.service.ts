@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import axios from 'axios';
 import { MenuAnalysisResult, MlAnalysisResult } from './interfaces/ml.interface';
-import { KomponenMenuDto } from 'src/features/menus/sppg-menus/dto/create-menu.dto';
+import { KomponenMenuDto } from 'src/modules/menus/sppg-menus/dto/create-menu.dto';
 
 @Injectable()
 export class MlService {

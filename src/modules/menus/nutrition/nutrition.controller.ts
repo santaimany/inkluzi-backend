@@ -16,7 +16,7 @@ import { NutritionService } from './nutrition.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { NutritionDetailResponseDto } from './dto/nutrition-detail-response.dto';
-import { Roles } from 'src/features/auth/decorators/roles.decorators';
+import { Roles } from 'src/modules/auth/decorators/roles.decorators';
 
 @ApiTags('Nutrition')
 @Controller('nutrition')

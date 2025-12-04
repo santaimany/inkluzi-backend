@@ -9,7 +9,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { IsDisabilityTypesValid } from 'src/features/auth/dto/validators/disability-types.validator';
+import { IsDisabilityTypesValid } from 'src/modules/auth/dto/validators/disability-types.validator';
 
 export class UpdateDisabilityTypeDto {
   @ApiProperty({

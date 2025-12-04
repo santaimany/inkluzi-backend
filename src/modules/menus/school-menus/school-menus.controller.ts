@@ -19,7 +19,7 @@ import { SchoolMenusService } from './school-menus.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { GetMenusQueryDto } from './dto/get-menus-query.dto';
-import { Roles } from 'src/features/auth/decorators/roles.decorators';
+import { Roles } from 'src/modules/auth/decorators/roles.decorators';
 
 @ApiTags('School Menus')
 @ApiBearerAuth()

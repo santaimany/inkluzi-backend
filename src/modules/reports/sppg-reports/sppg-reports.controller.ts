@@ -22,7 +22,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { GetReportsQueryDto } from './dto/get-reports-query.dto';
 import { RespondReportDto } from './dto/respond-report.dto';
-import { Roles } from 'src/features/auth/decorators/roles.decorators';
+import { Roles } from 'src/modules/auth/decorators/roles.decorators';
 
 @ApiTags('SPPG Reports')
 @ApiBearerAuth()

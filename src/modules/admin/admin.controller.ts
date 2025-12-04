@@ -1,9 +1,9 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { JwtAuthGuard } from 'src/features/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
-import { RolesGuard } from 'src/features/auth/guards/roles.guard';
-import { Roles } from 'src/features/auth/decorators/roles.decorators';
+import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
+import { Roles } from 'src/modules/auth/decorators/roles.decorators';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { AssignSchoolsDto } from './dto/assign-schools.dto';

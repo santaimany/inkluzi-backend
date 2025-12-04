@@ -27,7 +27,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { CreateReportDto } from './dto/create-report.dto';
 import { GetReportsQueryDto } from './dto/get-reports-query.dto';
-import { Roles } from 'src/features/auth/decorators/roles.decorators';
+import { Roles } from 'src/modules/auth/decorators/roles.decorators';
 
 @ApiTags('School Reports')
 @ApiBearerAuth()
