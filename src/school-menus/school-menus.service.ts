@@ -6,7 +6,6 @@ import { GetMenusQueryDto } from './dto/get-menus-query.dto';
 export class SchoolMenusService {
   constructor(private prisma: PrismaService) {}
 
-  // Helper: Parse tanggal string
   private parseTanggalString(tanggalStr: string): Date {
     const hariMap = {
       minggu: 0,
@@ -199,6 +198,8 @@ export class SchoolMenusService {
 
     // 6. Return dengan pagination
     return {
+        status: 'success',
+        message: 'Daftar menu berhasil diambil',
       data,
       meta: {
         page: query.page,
@@ -332,6 +333,8 @@ export class SchoolMenusService {
 
     // 8. Return response
     return {
+        status: 'success',
+        message: 'Menu detail berhasil diambil',
       data: {
         id: menu.id,
         hari: hari,
