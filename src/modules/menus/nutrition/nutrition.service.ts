@@ -79,9 +79,13 @@ export class NutritionService {
   console.log('Nutrition detail generated and saved');
 
   return {
+    status: 'success',
+    message: 'Detail nutrisi berhasil diambil',
+    data: {
     menu_id: menu.id,
     nama_menu: menu.namaMenu,
     ...nutritionData,
+    },
   };
 }
 
