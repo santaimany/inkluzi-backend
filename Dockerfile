@@ -6,7 +6,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Copy prisma schema FIRST (before install)
+# Copy prisma config and schema FIRST (before install)
+COPY prisma.config.ts ./
 COPY prisma ./prisma/
 
 # Install dependencies
@@ -29,7 +30,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Copy prisma schema to production
+# Copy prisma config and schema to production
+COPY prisma.config.ts ./
 COPY prisma ./prisma/
 
 # Install production dependencies only
