@@ -5,7 +5,10 @@ import { MlService } from 'src/ml/ml.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { GetMenusQueryDto } from './dto/get-menus-query.dto';
+import { UpdateMenuDto } from './dto/update-menu.dto';
+import { stat } from 'fs';
 /* TODO: 1. In case kalo ngecreate di tanggal yang sama gimana?
+        2.  Update menu belum fix
 */
 @Injectable()
 export class SppgMenusService {
@@ -373,6 +376,135 @@ async getMenuDetail(sppgUserId: string, menuId: string) {
             updated_at: menu.updatedAt,
         },
     };
+}
+
+
+async updateMenu(
+  sppgUserId: string,
+  menuId: string,
+  dto: UpdateMenuDto,
+) {
+  // 1. Dapatkan SPPG Profile
+  const sppgProfile = await this.prisma.sppgProfile.findUnique({
+    where: { userId: sppgUserId },
+  });
+
+  if (!sppgProfile) {
+    throw new NotFoundException('SPPG profile tidak ditemukan');
+  }
+
+  // 2. Cek apakah menu ada dan milik SPPG ini
+  const existingMenu = await this.prisma.menu.findUnique({
+    where: { id: menuId },
+    include: {
+      menuAssignments: {
+        include: {
+          schoolProfile: {
+            include: {
+              disabilityTypes: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!existingMenu) {
+    throw new NotFoundException('Menu tidak ditemukan');
+  }
+
+  if (existingMenu.sppgId !== sppgProfile.id) {
+    throw new ForbiddenException('Anda tidak memiliki akses ke menu ini');
+  }
+
+  // 3. Parse tanggal jika diubah
+  let parsedDate = existingMenu.tanggalDisajikan;
+  if (dto.tanggal) {
+    parsedDate = this.parseTanggalString(dto.tanggal);
+  }
+
+  // 4. Kumpulkan semua jenis disabilitas dari semua sekolah yang terassign
+  const allDisabilityTypes: string[] = [];
+  existingMenu.menuAssignments.forEach((assignment) => {
+    assignment.schoolProfile.disabilityTypes.forEach((dt) => {
+      if (!allDisabilityTypes.includes(dt.jenisDisabilitas)) {
+        allDisabilityTypes.push(dt.jenisDisabilitas);
+      }
+    });
+  });
+
+  // 5. Jika ada perubahan pada menu (nama atau komponen), analyze ulang dengan AI
+  let mlResult;
+  const menuNama = dto.nama_menu || existingMenu.namaMenu;
+  const komponenArray = dto.komponen_menu || JSON.parse(existingMenu.komponenMenu);
+
+  if (dto.nama_menu || dto.komponen_menu) {
+    // Ada perubahan menu, analyze ulang
+    mlResult = await this.mlService.analyzeMenu(
+      menuNama,
+      komponenArray,
+      allDisabilityTypes,
+    );
+  } else {
+    // Tidak ada perubahan menu, pakai hasil ML yang lama
+    mlResult = {
+      deteksi_risiko: existingMenu.deteksiRisiko as any,
+      kandungan_gizi: existingMenu.kandunganGizi as any,
+      rekomendasi: existingMenu.rekomendasi,
+      status_aman: existingMenu.statusKeamanan,
+      confidence: existingMenu.mlConfidence,
+    };
+  }
+
+  // 6. Format komponen menu menjadi string
+  const komponenMenuString = komponenArray
+    .map((k) => `${k.nama} (${k.porsi})`)
+    .join(', ');
+
+  // 7. Update menu
+  const updatedMenu = await this.prisma.menu.update({
+    where: { id: menuId },
+    data: {
+      tanggalDisajikan: parsedDate,
+      namaMenu: menuNama,
+      komponenMenu: komponenMenuString,
+      kandunganGizi: mlResult.kandungan_gizi,
+      deteksiRisiko: mlResult.deteksi_risiko,
+      rekomendasi: mlResult.rekomendasi,
+      statusKeamanan: mlResult.status_aman,
+      mlConfidence: mlResult.confidence,
+    },
+    include: {
+      menuAssignments: {
+        include: {
+          schoolProfile: true,
+        },
+      },
+    },
+  });
+
+  // 8. Format tanggal kembali ke string Indonesia
+  const tanggalString = this.formatTanggalToString(updatedMenu.tanggalDisajikan);
+
+  // 9. Parse komponen menu kembali ke array
+  const komponenMenuArray = komponenArray;
+
+  // 10. Return response
+  return {
+    status: 'success',
+    message: 'Menu berhasil diperbarui untuk semua sekolah yang terassign',
+    data: {
+      menu_id: updatedMenu.id,
+      tanggal: tanggalString,
+      nama_menu: updatedMenu.namaMenu,
+      komponen_menu: komponenMenuArray,
+      kandungan_gizi: updatedMenu.kandunganGizi,
+      deteksi_risiko: updatedMenu.deteksiRisiko,
+      rekomendasi: updatedMenu.rekomendasi,
+      status_keamanan: updatedMenu.statusKeamanan,
+      ml_confidence: updatedMenu.mlConfidence,
+    },
+  };
 }
 
     //++++++++++++++++++++++++

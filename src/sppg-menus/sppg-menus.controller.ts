@@ -6,6 +6,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
   Query,
   Req,
   UseGuards,
@@ -24,6 +25,7 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorators';
 import { GetMenusQueryDto } from './dto/get-menus-query.dto';
+import { UpdateMenuDto } from './dto/update-menu.dto';
 
 @ApiTags('SPPG - Menu Management')
 @ApiBearerAuth()
@@ -218,7 +220,7 @@ export class SppgMenusController {
         return this.sppgMenusService.getMenuDetail(sppgUserId, menuId);
     }
 
-    
+
     @ApiOperation({ 
         summary: 'Delete menu',
         description: 'SPPG menghapus menu dari database. Menu akan dihapus dari SEMUA sekolah yang di-assign. MenuAssignment akan cascade delete otomatis.'
@@ -256,4 +258,73 @@ export class SppgMenusController {
       const sppgUserId = req.user.userId;
       return this.sppgMenusService.deleteMenu(sppgUserId, menuId);
     }
+
+    @Put(':menu_id')
+@ApiOperation({
+  summary: 'Update menu untuk semua sekolah yang terassign',
+  description: 'SPPG dapat mengubah menu yang sudah dibuat. Jika komponen atau nama menu diubah, akan di-analyze ulang dengan AI',
+})
+@ApiParam({
+  name: 'menu_id',
+  description: 'UUID dari menu yang akan diupdate',
+  example: '123e4567-e89b-12d3-a456-426614174000',
+})
+@ApiResponse({
+  status: 200,
+  description: 'Menu berhasil diperbarui',
+  schema: {
+    example: {
+      message: 'Menu berhasil diperbarui untuk semua sekolah yang terassign',
+      data: {
+        menu_id: '123e4567-e89b-12d3-a456-426614174000',
+        tanggal: 'Senin, 12 Januari 2026',
+        nama_menu: 'Menu Sehat Bergizi - UPDATED',
+        komponen_menu: [
+          { nama: 'Nasi putih', porsi: '150g' },
+          { nama: 'Ikan bakar', porsi: '100g' },
+        ],
+        kandungan_gizi: {
+          kalori_total: 620,
+          protein: 32,
+          lemak: 15,
+          karbohidrat: 85,
+          serat: 8,
+          gula: 5,
+          natrium: 450,
+        },
+        deteksi_risiko: {
+          alergi: ['Ikan - risiko tinggi untuk anak dengan alergi makanan laut'],
+          tekstur: [],
+          porsi_gizi: [],
+        },
+        rekomendasi: 'Menu sudah cukup seimbang...',
+        status_keamanan: 'perlu_perhatian',
+        ml_confidence: 0.87,
+        total_sekolah: 3,
+        sekolah_terassign: [
+          {
+            school_id: 'abc-123',
+            nama_sekolah: 'SDN 01 Jakarta',
+            npsn: '12345678',
+          },
+        ],
+      },
+    },
+  },
+})
+@ApiResponse({
+  status: 404,
+  description: 'Menu tidak ditemukan',
+})
+@ApiResponse({
+  status: 403,
+  description: 'Anda tidak memiliki akses ke menu ini',
+})
+async updateMenu(
+  @Req() req,
+  @Param('menu_id', new ParseUUIDPipe({ version: '4' })) menuId: string,
+  @Body() dto: UpdateMenuDto,
+) {
+  return this.sppgMenusService.updateMenu(req.user.userId, menuId, dto);
+}
 }
