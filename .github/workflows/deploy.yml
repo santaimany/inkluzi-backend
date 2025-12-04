@@ -49,14 +49,16 @@ jobs:
     needs: build
     
     steps:
-      - name: 📤 Deploy to VPS via SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY_BASE64 }}
-          key_base64: true  # ← Tambahkan ini!
-          script: |
+      - name: 🔐 Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY_BASE64 }}" | base64 -d > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: 📤 Deploy to VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             echo "🔄 Starting deployment..."
             
             cd /var/www/mbg-backend
@@ -71,13 +73,14 @@ jobs:
             sleep 10
             
             echo "🗄️ Running database migrations..."
-            docker exec ${{ env.CONTAINER_NAME }} npx prisma migrate deploy
+            docker exec mbg-backend npx prisma migrate deploy
             
             echo "🧹 Cleaning up old images..."
             docker image prune -f
             
             echo "✅ Deployment completed!"
             docker-compose ps
+          EOF
 
       - name: 📊 Deployment Summary
         run: |
