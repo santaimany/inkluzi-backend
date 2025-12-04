@@ -168,6 +168,7 @@ model Menu {
   rekomendasi      String?         @db.Text
   statusKeamanan   StatusKeamanan? @map("status_keamanan")
   mlConfidence     Float?          @map("ml_confidence") @db.Real
+  detailNutrisi    Json?           @map("detail_nutrisi") 
   
   createdAt        DateTime        @default(now()) @map("created_at")
   updatedAt        DateTime        @updatedAt @map("updated_at")
