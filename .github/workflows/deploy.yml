@@ -52,7 +52,7 @@ jobs:
       - name: 🔐 Setup SSH Key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY_BASE64 }}" | base64 -d > ~/.ssh/deploy_key
+          echo "${{ secrets.VPS_SSH_KEY_BASE64 }}" | tr -d '\n' | base64 -d > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
@@ -60,24 +60,17 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             echo "🔄 Starting deployment..."
-            
             cd /var/www/mbg-backend
-            
             echo "📥 Pulling latest Docker image..."
             docker-compose pull
-            
             echo "🔄 Recreating containers..."
             docker-compose up -d --force-recreate
-            
             echo "⏳ Waiting for container to be ready..."
             sleep 10
-            
             echo "🗄️ Running database migrations..."
             docker exec mbg-backend npx prisma migrate deploy
-            
             echo "🧹 Cleaning up old images..."
             docker image prune -f
-            
             echo "✅ Deployment completed!"
             docker-compose ps
           EOF
@@ -86,7 +79,7 @@ jobs:
         run: |
           echo "## 🎉 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image**: ${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: santaimany/mbg-backend:latest" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Deployed to**: ${{ secrets.VPS_HOST }}" >> $GITHUB_STEP_SUMMARY
