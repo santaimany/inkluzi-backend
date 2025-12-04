@@ -3,8 +3,10 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import { ConfigService } from '@nestjs/config';
-import {  env } from 'prisma/config';
-
+import { env } from 'prisma/config';
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv/config');
+}
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
