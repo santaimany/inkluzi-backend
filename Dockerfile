@@ -6,14 +6,14 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Copy prisma config and schema FIRST (before install)
+# Copy prisma files (schema + config)
 COPY prisma.config.ts ./
 COPY prisma ./prisma/
 
 # Install dependencies
 RUN npm ci
 
-# Generate Prisma Client AFTER install
+# Generate Prisma Client (DATABASE_URL tidak perlu saat generate)
 RUN npx prisma generate
 
 # Copy source code
@@ -30,14 +30,14 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Copy prisma config and schema to production
+# Copy prisma files to production
 COPY prisma.config.ts ./
 COPY prisma ./prisma/
 
 # Install production dependencies only
 RUN npm ci --only=production
 
-# Generate Prisma Client in production stage too
+# Generate Prisma Client in production stage
 RUN npx prisma generate
 
 # Copy built application from builder
