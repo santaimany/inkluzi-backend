@@ -507,6 +507,46 @@ async updateMenu(
   };
 }
 
+async deleteMenu(sppgUserId: string, menuId: string) {
+        const sppgProfile = await this.prisma.sppgProfile.findUnique({
+            where: { userId: sppgUserId },
+        })
+
+        if(!sppgProfile) {
+            throw new NotFoundException('SPPG profile tidak ditemukan');
+        }
+
+        const menu = await this.prisma.menu.findUnique({
+            where: {id: menuId},
+            include: {
+                menuAssignments: {
+                    include: {
+                        schoolProfile: true,
+                    }
+                },
+            }
+        })
+
+        if(!menu) {
+            throw new NotFoundException('Menu tidak ditemukan');
+        }
+
+        if(menu.sppgId !== sppgProfile.id) {
+            throw new ForbiddenException('Anda tidak memiliki akses ke menu ini');
+        }
+
+        const totalSekolah = menu.menuAssignments.length;
+
+        await this.prisma.menu.delete({
+            where: {id:menuId}
+        })
+
+        return {
+            status: 'success',
+            message: `Menu berhasil dihapus dan tidak lagi ditugaskan ke ${totalSekolah} sekolah.`,
+        }
+    }
+
     //++++++++++++++++++++++++
     //HELPER FUNCTIONS
     //++++++++++++++++++++++++
@@ -596,43 +636,5 @@ async updateMenu(
         return `${hari}, ${tanggal} ${bulan} ${tahun}`;
     }
 
-    async deleteMenu(sppgUserId: string, menuId: string) {
-        const sppgProfile = await this.prisma.sppgProfile.findUnique({
-            where: { userId: sppgUserId },
-        })
-
-        if(!sppgProfile) {
-            throw new NotFoundException('SPPG profile tidak ditemukan');
-        }
-
-        const menu = await this.prisma.menu.findUnique({
-            where: {id: menuId},
-            include: {
-                menuAssignments: {
-                    include: {
-                        schoolProfile: true,
-                    }
-                },
-            }
-        })
-
-        if(!menu) {
-            throw new NotFoundException('Menu tidak ditemukan');
-        }
-
-        if(menu.sppgId !== sppgProfile.id) {
-            throw new ForbiddenException('Anda tidak memiliki akses ke menu ini');
-        }
-
-        const totalSekolah = menu.menuAssignments.length;
-
-        await this.prisma.menu.delete({
-            where: {id:menuId}
-        })
-
-        return {
-            status: 'success',
-            message: `Menu berhasil dihapus dan tidak lagi ditugaskan ke ${totalSekolah} sekolah.`,
-        }
-    }
+    
 }
