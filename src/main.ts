@@ -21,7 +21,6 @@ async function bootstrap() {
     .setTitle('Inkluzi MBG API Documentation')
     .setDescription('API Documentation for Inkluzi MBG Backend')
     .setVersion('1.0')
-    .addTag('auth', 'Authentication endpoints')
     .addBearerAuth(
       {
         type: 'http',
