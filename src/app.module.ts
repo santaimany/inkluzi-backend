@@ -14,6 +14,7 @@ import { SppgSchoolsModule } from './sppg-schools/sppg-schools.module';
 import { SppgMenusModule } from './sppg-menus/sppg-menus.module';
 import { SppgReportsModule } from './sppg-reports/sppg-reports.module';
 import { SchoolReportsModule } from './school-reports/school-reports.module';
+import { SchoolMenusModule } from './school-menus/school-menus.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { SchoolReportsModule } from './school-reports/school-reports.module';
     SppgMenusModule,
     SppgReportsModule,
     SchoolReportsModule,
+    SchoolMenusModule,
   ],
   controllers: [AppController, AuthController],
   providers: [AppService],
