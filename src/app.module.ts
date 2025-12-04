@@ -12,6 +12,7 @@ import { EmailModule } from './email/email.module';
 import { FoodScanModule } from './food-scan/food-scan.module';
 import { SppgSchoolsModule } from './sppg-schools/sppg-schools.module';
 import { SppgMenusModule } from './sppg-menus/sppg-menus.module';
+import { SppgReportsModule } from './sppg-reports/sppg-reports.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { SppgMenusModule } from './sppg-menus/sppg-menus.module';
     FoodScanModule,
     SppgSchoolsModule,
     SppgMenusModule,
+    SppgReportsModule,
   ],
   controllers: [AppController, AuthController],
   providers: [AppService],
