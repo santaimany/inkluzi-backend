@@ -1,0 +1,88 @@
+name: 🚀 Deploy to VPS
+
+on:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: santaimany/mbg-backend
+  CONTAINER_NAME: mbg-backend
+
+jobs:
+  build:
+    name: 🔨 Build Docker Image
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: 🔐 Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 🏗️ Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:latest
+          cache-to: type=inline
+
+      - name: ✅ Build completed
+        run: |
+          echo "✅ Image built and pushed successfully!"
+          echo "🏷️ Tags: latest, ${{ github.sha }}"
+
+  deploy:
+    name: 🚀 Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - name: 📤 Deploy to VPS via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            echo "🔄 Starting deployment..."
+            
+            cd /var/www/mbg-backend
+            
+            echo "📥 Pulling latest Docker image..."
+            docker-compose pull
+            
+            echo "🔄 Recreating containers..."
+            docker-compose up -d --force-recreate
+            
+            echo "⏳ Waiting for container to be ready..."
+            sleep 10
+            
+            echo "🗄️ Running database migrations..."
+            docker exec ${{ env.CONTAINER_NAME }} npx prisma migrate deploy
+            
+            echo "🧹 Cleaning up old images..."
+            docker image prune -f
+            
+            echo "✅ Deployment completed!"
+            docker-compose ps
+
+      - name: 📊 Deployment Summary
+        run: |
+          echo "## 🎉 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: ${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed to**: ${{ secrets.VPS_HOST }}" >> $GITHUB_STEP_SUMMARY
