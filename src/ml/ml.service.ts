@@ -1,4 +1,4 @@
-import { Injectable, Logger, HttpException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, HttpException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import axios from 'axios';
@@ -353,6 +353,162 @@ PENTING:
     this.logger.error('Error analyzing menu with Gemini AI', error);
     throw new BadRequestException(
       'Gagal menganalisis menu. Silakan coba lagi.'
+    );
+  }
+}
+
+async generateNutritionDetail(data: {
+  nama_menu: string;
+  komponen_menu: any[];
+  basic_nutrition?: any; // ← TAMBAH PARAMETER INI
+}): Promise<any> {
+  // Extract komponen
+  const komponenList = Array.isArray(data.komponen_menu)
+    ? data.komponen_menu
+        .map((k) => 
+          typeof k === 'object' 
+            ? `${k.nama} (${k.porsi || 'porsi standar'})`
+            : k
+        )
+        .join(', ')
+    : data.komponen_menu;
+
+  // Prepare basic nutrition reference if available
+  const nutritionReference = data.basic_nutrition
+    ? `
+GUNAKAN DATA NUTRISI BASIC INI SEBAGAI REFERENSI (jangan ubah nilai total):
+- Total Kalori: ${data.basic_nutrition.kalori_total || data.basic_nutrition.total_kalori} kkal
+- Protein: ${data.basic_nutrition.protein} g
+- Karbohidrat: ${data.basic_nutrition.karbohidrat} g
+- Lemak: ${data.basic_nutrition.lemak} g
+- Serat: ${data.basic_nutrition.serat} g
+- Gula: ${data.basic_nutrition.gula} g
+- Sodium: ${data.basic_nutrition.sodium} mg
+
+PENTING: Total kalori di response HARUS sama dengan ${data.basic_nutrition.kalori_total || data.basic_nutrition.total_kalori} kkal!
+    `
+    : '';
+
+  const prompt = `
+Kamu adalah ahli gizi yang akan menganalisis menu makanan sekolah untuk anak berkebutuhan khusus.
+
+Menu: ${data.nama_menu}
+Komponen: ${komponenList}
+
+${nutritionReference}
+
+Berikan analisis nutrisi LENGKAP dalam format JSON dengan struktur PERSIS seperti ini (gunakan snake_case):
+
+{
+  "deskripsi": "(3-4 kalimat) Deskripsi lengkap menu, cara memasak, tekstur makanan, dan manfaat nutrisinya untuk siswa berkebutuhan khusus",
+  "info_nutrisi": {
+    "total_kalori": ${data.basic_nutrition?.kalori_total || data.basic_nutrition?.total_kalori || '(hitung total kalori)'},
+    "total_porsi": "(hitung total) gram/porsi",
+    "donut_chart": {
+      "karbohidrat": {
+        "persentase": (hitung: (${data.basic_nutrition?.karbohidrat || 'X'} × 4) / total_kalori × 100),
+        "label": "Karbohidrat\\n(number)%"
+      },
+      "protein": {
+        "persentase": (hitung: (${data.basic_nutrition?.protein || 'X'} × 4) / total_kalori × 100),
+        "label": "Protein\\n(number)%"
+      },
+      "lemak": {
+        "persentase": (hitung: (${data.basic_nutrition?.lemak || 'X'} × 9) / total_kalori × 100),
+        "label": "Lemak\\n(number)%"
+      },
+      "lainnya": {
+        "persentase": (100 - karbohidrat% - protein% - lemak%),
+        "label": "Lainnya\\n(number)%"
+      }
+    }
+  },
+  "persentase_akg": {
+    "kalori": { 
+      "label": "Kalori", 
+      "nilai": "${data.basic_nutrition?.kalori_total ? Math.round((data.basic_nutrition.kalori_total / 2000) * 100) : '(hitung)'}% Nilai Harian" 
+    },
+    "karbohidrat": { 
+      "label": "Karbohidrat", 
+      "nilai": "${data.basic_nutrition?.karbohidrat ? Math.round((data.basic_nutrition.karbohidrat / 300) * 100) : '(hitung)'}% Nilai Harian" 
+    },
+    "protein": { 
+      "label": "Protein", 
+      "nilai": "${data.basic_nutrition?.protein ? Math.round((data.basic_nutrition.protein / 66) * 100) : '(hitung)'}% Nilai Harian" 
+    },
+    "lemak": { 
+      "label": "Lemak", 
+      "nilai": "${data.basic_nutrition?.lemak ? Math.round((data.basic_nutrition.lemak / 65) * 100) : '(hitung)'}% Nilai Harian" 
+    },
+    "serat": { 
+      "label": "Serat", 
+      "nilai": "${data.basic_nutrition?.serat ? Math.round((data.basic_nutrition.serat / 30) * 100) : '(hitung)'}% Nilai Harian" 
+    },
+    "gula": { 
+      "label": "Gula", 
+      "nilai": "${data.basic_nutrition?.gula ? Math.round((data.basic_nutrition.gula / 50) * 100) : '(hitung)'}% Nilai Harian" 
+    },
+    "sodium": { 
+      "label": "Sodium", 
+      "nilai": "${data.basic_nutrition?.sodium ? Math.round((data.basic_nutrition.sodium / 2300) * 100) : '(hitung)'}% Nilai Harian" 
+    }
+  },
+  "komponen_detail": [
+    {
+      "nama": "Nama komponen",
+      "berat": "(number) gram atau (number) mili",
+      "kalori": (number),
+      "satuan_kalori": "kkal Kalori",
+      "nutrisi": {
+        "karbohidrat": { "nilai": "(number)g", "label": "Karbohidrat" },
+        "protein": { "nilai": "(number)g", "label": "Protein" },
+        "lemak": { "nilai": "(number)g", "label": "Lemak" },
+        "gula": { "nilai": "(number)g", "label": "Gula" },
+        "serat": { "nilai": "(number)g", "label": "Serat" },
+        "sodium": { "nilai": "(number)mg", "label": "Sodium" }
+      }
+    }
+  ],
+  "informasi_akg": {
+    "pengertian": "AKG (Angka Kecukupan Gizi) adalah acuan jumlah energi dan zat gizi yang sebaiknya dikonsumsi seseorang setiap hari sesuai usia dan kondisi tubuh.",
+    "fungsi": "Persentase AKG menunjukkan seberapa besar kontribusi satu porsi menu terhadap kebutuhan harian. Dengan % AKG, sekolah bisa lebih cepat menilai apakah makanan cukup bergizi, terlalu tinggi gula/lemak, atau kurang aman untuk anak disabilitas yang memerlukan penyesuaian khusus.",
+    "tetapan_akg": {
+      "energi": "2000 kkal",
+      "karbohidrat": "300 g",
+      "protein": "66 g",
+      "lemak": "65 g",
+      "serat": "30 g",
+      "sodium": "2300 mg"
+    }
+  }
+}
+
+PENTING:
+- PASTIKAN total_kalori di info_nutrisi = ${data.basic_nutrition?.kalori_total || data.basic_nutrition?.total_kalori} (HARUS SAMA!)
+- Breakdown komponen_detail harus total = kalori total
+- Donut chart persentase harus total = 100%
+- Response HARUS valid JSON tanpa markdown
+  `;
+
+  try {
+    const result = await this.model.generateContent(prompt);
+    let responseText = result.response.text()
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim();
+
+    const parsedData = JSON.parse(responseText);
+    
+    // Validate
+    if (!parsedData.info_nutrisi || !parsedData.komponen_detail) {
+      throw new Error('Invalid nutrition data structure');
+    }
+
+    return parsedData;
+  } catch (error) {
+    console.error('Error generating nutrition detail:', error);
+    throw new InternalServerErrorException(
+      'Gagal menghasilkan detail nutrisi. Silakan coba lagi.',
     );
   }
 }
