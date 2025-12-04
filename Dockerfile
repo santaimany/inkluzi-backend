@@ -5,16 +5,18 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+
+# Copy prisma schema FIRST (before install)
 COPY prisma ./prisma/
 
-# Install ALL dependencies (including dev)
+# Install dependencies
 RUN npm ci
+
+# Generate Prisma Client AFTER install
+RUN npx prisma generate
 
 # Copy source code
 COPY . .
-
-# Generate Prisma Client
-RUN npx prisma generate
 
 # Build application
 RUN npm run build
@@ -26,14 +28,18 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+
+# Copy prisma schema to production
 COPY prisma ./prisma/
 
-# Install ONLY production dependencies
+# Install production dependencies only
 RUN npm ci --only=production
 
-# Copy built application from builder stage
+# Generate Prisma Client in production stage too
+RUN npx prisma generate
+
+# Copy built application from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 # Expose port
 EXPOSE 3000
