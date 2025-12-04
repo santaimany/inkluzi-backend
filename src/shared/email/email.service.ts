@@ -43,52 +43,81 @@ export class EmailService {
       }
     });
   }
-
-  async sendAccountActivationEmail(email: string, name: string, role: string): Promise<void> {
+async sendAccountActivationEmail(email: string, name: string, role: string): Promise<void> {
     if (!this.emailEnabled) {
       this.logger.warn(`Email disabled - would have sent activation email to: ${email}`);
       return;
     }
 
+    const loginUrl = this.configService.get('FRONTEND_URL') || 'https://inkluzi.my.id';
+    const roleName = role === 'sppg' ? 'SPPG (Satuan Pelayanan Pangan Bergizi)' : 'Pihak Sekolah';
+
     try {
       const mailOptions = {
-        from: `"MBG System" <${this.configService.get('SMTP_FROM')}>`,
+        from: `"Inkluzi MBG System" <${this.configService.get('SMTP_FROM')}>`,
         to: email,
-        subject: 'Akun Anda Telah Diaktifkan - MBG System',
+        subject: 'Aktivasi Akun - Inkluzi MBG System',
         html: `
           <!DOCTYPE html>
           <html>
           <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }
-              .content { background-color: #f9f9f9; padding: 20px; border-radius: 5px; margin-top: 20px; }
-              .button { display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; margin-top: 15px; }
-              .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+              body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; color: #333333; }
+              .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 8px; border: 1px solid #e0e0e0; overflow: hidden; }
+              .header { background-color: #2c3e50; padding: 24px; text-align: center; }
+              .header h1 { color: #ffffff; font-size: 20px; margin: 0; font-weight: 500; letter-spacing: 0.5px; }
+              .content { padding: 40px; }
+              .greeting { font-size: 16px; font-weight: bold; margin-bottom: 24px; color: #2c3e50; }
+              .text { font-size: 15px; line-height: 1.6; color: #555555; margin-bottom: 24px; }
+              .info-box { background-color: #f8f9fa; border-left: 4px solid #3498db; padding: 20px; margin-bottom: 30px; border-radius: 4px; }
+              .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+              .info-label { font-weight: 600; color: #7f8c8d; width: 100px; }
+              .info-value { color: #2c3e50; font-weight: 500; }
+              .btn-container { text-align: center; margin: 32px 0; }
+              .btn { background-color: #3498db; color: #ffffff !important; padding: 14px 28px; border-radius: 4px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block; transition: background-color 0.3s; }
+              .btn:hover { background-color: #2980b9; }
+              .footer { background-color: #f8f9fa; padding: 24px; text-align: center; font-size: 12px; color: #95a5a6; border-top: 1px solid #e0e0e0; }
             </style>
           </head>
           <body>
             <div class="container">
               <div class="header">
-                <h1>🎉 Selamat!</h1>
+                <h1>Inkluzi MBG System</h1>
               </div>
               <div class="content">
-                <p>Halo <strong>${name}</strong>,</p>
-                <p>Kami dengan senang hati memberitahukan bahwa akun Anda sebagai <strong>${role === 'sppg' ? 'SPPG' : 'Sekolah'}</strong> telah <strong>diaktifkan</strong> oleh administrator.</p>
-                <p>Anda sekarang dapat login dan mengakses sistem MBG (Makanan Bergizi) untuk:</p>
-                <ul>
-                  ${role === 'sppg' 
-                    ? '<li>Mengelola menu makanan untuk sekolah-sekolah</li><li>Melihat laporan dari sekolah</li><li>Mengakses data sekolah binaan</li>' 
-                    : '<li>Melihat menu makanan yang disediakan</li><li>Scan makanan untuk analisis nutrisi</li><li>Membuat laporan ke SPPG</li>'
-                  }
-                </ul>
-                <p>Silakan login menggunakan email dan password yang telah Anda daftarkan.</p>
-                <a href="${this.configService.get('FRONTEND_URL')}/login" class="button">Login Sekarang</a>
+                <p class="greeting">Yth. ${name},</p>
+                
+                <p class="text">
+                  Kami informasikan bahwa proses verifikasi akun Anda telah selesai. 
+                  Saat ini akun Anda telah <strong>aktif</strong> dan dapat digunakan untuk mengakses sistem.
+                </p>
+
+                <div class="info-box">
+                  <div class="text" style="margin: 0; font-size: 14px;">
+                    <strong>Detail Akun:</strong><br><br>
+                    <span style="color: #7f8c8d;">Email:</span> <span style="color: #2c3e50;">${email}</span><br>
+                    <span style="color: #7f8c8d;">Akses Role:</span> <span style="color: #2c3e50;">${roleName}</span><br>
+                    <span style="color: #7f8c8d;">Status:</span> <span style="color: #27ae60; font-weight: bold;">Aktif</span>
+                  </div>
+                </div>
+
+                <p class="text">
+                  Silakan masuk ke dashboard untuk mulai mengelola data dan menggunakan fitur yang tersedia sesuai dengan hak akses Anda.
+                </p>
+
+                <div class="btn-container">
+                  <a href="${loginUrl}/login" class="btn">Masuk ke Dashboard</a>
+                </div>
+                
+                <p class="text" style="font-size: 13px; color: #95a5a6; margin-top: 30px;">
+                  Catatan: Jika Anda tidak merasa melakukan pendaftaran ini, mohon abaikan email ini atau hubungi administrator.
+                </p>
               </div>
               <div class="footer">
-                <p>Email ini dikirim otomatis oleh sistem MBG. Jangan balas email ini.</p>
-                <p>Jika Anda memiliki pertanyaan, hubungi administrator.</p>
+                &copy; ${new Date().getFullYear()} Inkluzi MBG System.<br>
+                Makanan Bergizi untuk Anak Berkebutuhan Khusus.
               </div>
             </div>
           </body>
@@ -100,7 +129,6 @@ export class EmailService {
       this.logger.log(`Activation email sent to: ${email}`);
     } catch (error) {
       this.logger.error(`Failed to send email to ${email}:`, error);
-      // Tidak throw error agar proses utama tetap berjalan
     }
   }
 
@@ -112,34 +140,55 @@ export class EmailService {
 
     try {
       const mailOptions = {
-        from: `"MBG System" <${this.configService.get('SMTP_FROM')}>`,
+        from: `"Inkluzi MBG System" <${this.configService.get('SMTP_FROM')}>`,
         to: email,
-        subject: 'Akun Anda Telah Dinonaktifkan - MBG System',
+        subject: 'Pemberitahuan Status Akun - Inkluzi MBG',
         html: `
           <!DOCTYPE html>
           <html>
           <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background-color: #f44336; color: white; padding: 20px; text-align: center; }
-              .content { background-color: #f9f9f9; padding: 20px; border-radius: 5px; margin-top: 20px; }
-              .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+              body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; color: #333333; }
+              .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 8px; border: 1px solid #e0e0e0; overflow: hidden; }
+              .header { background-color: #c0392b; padding: 24px; text-align: center; } /* Merah gelap profesional */
+              .header h1 { color: #ffffff; font-size: 20px; margin: 0; font-weight: 500; letter-spacing: 0.5px; }
+              .content { padding: 40px; }
+              .greeting { font-size: 16px; font-weight: bold; margin-bottom: 24px; color: #2c3e50; }
+              .text { font-size: 15px; line-height: 1.6; color: #555555; margin-bottom: 24px; }
+              .alert-box { background-color: #fdf2f2; border: 1px solid #fadbd8; padding: 20px; margin-bottom: 30px; border-radius: 4px; color: #c0392b; }
+              .footer { background-color: #f8f9fa; padding: 24px; text-align: center; font-size: 12px; color: #95a5a6; border-top: 1px solid #e0e0e0; }
             </style>
           </head>
           <body>
             <div class="container">
               <div class="header">
-                <h1>⚠️ Pemberitahuan</h1>
+                <h1>Pemberitahuan Sistem</h1>
               </div>
               <div class="content">
-                <p>Halo <strong>${name}</strong>,</p>
-                <p>Kami informasikan bahwa akun Anda sebagai <strong>${role === 'sppg' ? 'SPPG' : 'Sekolah'}</strong> telah <strong>dinonaktifkan</strong> oleh administrator.</p>
-                <p>Anda tidak dapat login ke sistem MBG sampai akun Anda diaktifkan kembali.</p>
-                <p>Jika Anda merasa ini adalah kesalahan, silakan hubungi administrator untuk informasi lebih lanjut.</p>
+                <p class="greeting">Yth. ${name},</p>
+                
+                <p class="text">
+                  Melalui email ini, kami ingin memberitahukan mengenai perubahan status akun Anda pada sistem Inkluzi MBG.
+                </p>
+
+                <div class="alert-box">
+                  <strong>Status Akun: Dinonaktifkan</strong><br>
+                  <span style="font-size: 14px; color: #636e72;">Akses masuk ke dalam sistem telah dibatasi untuk sementara waktu.</span>
+                </div>
+
+                <p class="text">
+                  Jika Anda merasa ini adalah kekeliruan atau membutuhkan informasi lebih lanjut mengenai alasan penonaktifan ini, silakan menghubungi Administrator sistem kami.
+                </p>
+
+                <p class="text" style="margin-top: 30px;">
+                  Terima kasih atas perhatian Anda.
+                </p>
               </div>
               <div class="footer">
-                <p>Email ini dikirim otomatis oleh sistem MBG. Jangan balas email ini.</p>
+                &copy; ${new Date().getFullYear()} Inkluzi MBG System.<br>
+                Makanan Bergizi untuk Anak Berkebutuhan Khusus.
               </div>
             </div>
           </body>
