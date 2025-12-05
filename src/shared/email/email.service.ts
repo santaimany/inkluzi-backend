@@ -11,8 +11,7 @@ export class EmailService {
   constructor(private readonly configService: ConfigService) {
     const smtpHost = this.configService.get('SMTP_HOST');
     const smtpUser = this.configService.get('SMTP_USER');
-    
-    // Check if email is configured
+
     if (!smtpHost || !smtpUser) {
       this.logger.warn('Email not configured. Email notifications will be disabled.');
       this.emailEnabled = false;
@@ -26,14 +25,14 @@ export class EmailService {
     this.transporter = nodemailer.createTransport({
       host: smtpHost,
       port: smtpPort,
-      secure: smtpPort === 465, // true for 465, false for other ports
+      secure: smtpPort === 465, 
       auth: {
         user: smtpUser,
         pass: this.configService.get('SMTP_PASS'),
       },
     });
 
-    // Verify connection configuration
+  
     this.transporter.verify((error) => {
       if (error) {
         this.logger.error('SMTP connection error:', error);

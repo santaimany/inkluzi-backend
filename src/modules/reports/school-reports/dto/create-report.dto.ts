@@ -8,7 +8,7 @@ export class CreateReportDto {
   })
   @IsNotEmpty()
   @IsUUID('4')
-  menu_id: string; // ← REQUIRED, bukan optional lagi
+  menu_id: string; 
 
   @ApiProperty({
     description: 'Catatan detail mengenai pelaporan',

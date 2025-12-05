@@ -37,7 +37,6 @@ import { Roles } from 'src/modules/auth/decorators/roles.decorators';
 export class SchoolReportsController {
   constructor(private readonly schoolReportsService: SchoolReportsService) {}
 
-  // CREATE REPORT
   @Post()
   @UseInterceptors(FileInterceptor('foto_menu'))
   @ApiConsumes('multipart/form-data')
@@ -103,7 +102,6 @@ export class SchoolReportsController {
     return this.schoolReportsService.createReport(req.user.userId, dto, file);
   }
 
-  // GET LIST REPORTS
   @Get()
   @ApiOperation({
     summary: 'Dapatkan daftar laporan yang pernah dibuat',

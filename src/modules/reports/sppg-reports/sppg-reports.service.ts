@@ -13,9 +13,9 @@ import { RespondReportDto } from './dto/respond-report.dto';
 export class SppgReportsService {
   constructor(private prisma: PrismaService) {}
 
-  // GET LIST REPORTS
+  
   async getReports(sppgUserId: string, query: GetReportsQueryDto) {
-    // 1. Dapatkan SPPG Profile
+  
     const sppgProfile = await this.prisma.sppgProfile.findUnique({
       where: { userId: sppgUserId },
     });
@@ -24,7 +24,7 @@ export class SppgReportsService {
       throw new NotFoundException('SPPG profile tidak ditemukan');
     }
 
-    // 2. Build where clause
+  
     const where: any = {
       sppgId: sppgProfile.id,
     };
@@ -37,10 +37,10 @@ export class SppgReportsService {
       where.sekolahId = query.school_id;
     }
 
-    // 3. Hitung total data
+ 
     const total = await this.prisma.report.count({ where });
 
-    // 4. Fetch reports dengan pagination
+  
     const reports = await this.prisma.report.findMany({
       where,
       include: {
@@ -54,7 +54,7 @@ export class SppgReportsService {
       take: query.limit,
     });
 
-    // 5. Format response
+
     const data = reports.map((report) => ({
       id: report.id,
       menu_name: report.menu?.namaMenu || null,
@@ -63,7 +63,7 @@ export class SppgReportsService {
       created_at: report.createdAt.toISOString(),
     }));
 
-    // 6. Return dengan pagination
+
     return {
       success: true,
       message: 'Operation successful',
@@ -77,9 +77,9 @@ export class SppgReportsService {
     };
   }
 
-  // GET DETAIL REPORT
+
   async getReportDetail(sppgUserId: string, reportId: string) {
-    // 1. Dapatkan SPPG Profile
+
     const sppgProfile = await this.prisma.sppgProfile.findUnique({
       where: { userId: sppgUserId },
     });
@@ -88,7 +88,6 @@ export class SppgReportsService {
       throw new NotFoundException('SPPG profile tidak ditemukan');
     }
 
-    // 2. Fetch report
     const report = await this.prisma.report.findUnique({
       where: { id: reportId },
       include: {
@@ -105,12 +104,12 @@ export class SppgReportsService {
       throw new NotFoundException('Laporan tidak ditemukan');
     }
 
-    // 3. Verify ownership
+
     if (report.sppgId !== sppgProfile.id) {
       throw new ForbiddenException('Anda tidak memiliki akses ke laporan ini');
     }
 
-    // 4. Format response
+
     return {
       success: true,
       message: 'Operation successful',
@@ -148,13 +147,13 @@ export class SppgReportsService {
     };
   }
 
-  // RESPOND TO REPORT (UPDATE)
+
   async respondToReport(
     sppgUserId: string,
     reportId: string,
     dto: RespondReportDto,
   ) {
-    // 1. Dapatkan SPPG Profile
+   
     const sppgProfile = await this.prisma.sppgProfile.findUnique({
       where: { userId: sppgUserId },
     });
@@ -163,7 +162,7 @@ export class SppgReportsService {
       throw new NotFoundException('SPPG profile tidak ditemukan');
     }
 
-    // 2. Cek apakah report ada dan milik SPPG ini
+
     const report = await this.prisma.report.findUnique({
       where: { id: reportId },
       include: {
@@ -179,7 +178,6 @@ export class SppgReportsService {
       throw new ForbiddenException('Anda tidak memiliki akses ke laporan ini');
     }
 
-    // 3. Update report - set status ke completed dan simpan response (jika ada)
     const updatedReport = await this.prisma.report.update({
       where: { id: reportId },
       data: {
@@ -189,7 +187,7 @@ export class SppgReportsService {
       },
     });
 
-    // 4. Return response
+ 
     return {
       success: true,
       message: 'Laporan berhasil ditanggapi',

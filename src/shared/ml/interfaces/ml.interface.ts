@@ -1,4 +1,3 @@
-// src/ml/interfaces/ml.interface.ts
 
 export interface KomponenMenu {
   nama: string;
@@ -23,7 +22,7 @@ export interface DeteksiRisiko {
   keamanan?: string[];
   pencernaan?: string[];
   porsi?: string[];
-  [key: string]: string[] | undefined; // Allow dynamic keys
+  [key: string]: string[] | undefined; 
 }
 
 export interface MlAnalysisResult {
@@ -44,5 +43,5 @@ export interface MenuAnalysisResult {
   kandungan_gizi: KandunganGizi;
   rekomendasi: string;
   status_aman: 'aman' | 'perlu_perhatian' | 'tidak_aman';
-  confidence: number; // TAMBAHKAN INI
+  confidence: number; 
 }

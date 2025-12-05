@@ -17,7 +17,7 @@ export class SchoolReportsService {
     private cloudinary: CloudinaryService,
   ) {}
 
-  // CREATE REPORT
+ 
 
 async createReport(
   schoolUserId: string,
@@ -83,13 +83,13 @@ async createReport(
     },
   });
 
-  // 6. Return response
+
   return {
     success: true,
     message: 'Laporan berhasil dikirim ke SPPG',
     data: {
       report_id: report.id,
-      menu_name: report.menu.namaMenu, // ← Pasti ada karena menu_id required
+      menu_name: report.menu.namaMenu, 
       sppg_name: report.sppgProfile.namaInstansi,
       foto_menu: report.imageUrl,
       catatan: report.catatan,
@@ -119,10 +119,8 @@ async createReport(
       where.status = query.status;
     }
 
-    // 3. Hitung total data
     const total = await this.prisma.report.count({ where });
 
-    // 4. Fetch reports dengan pagination
     const reports = await this.prisma.report.findMany({
       where,
       include: {
@@ -136,7 +134,6 @@ async createReport(
       take: query.limit,
     });
 
-    // 5. Format response
     const data = reports.map((report) => ({
       id: report.id,
       menu_name: report.menu?.namaMenu || null,
@@ -145,7 +142,7 @@ async createReport(
       created_at: report.createdAt.toISOString(),
     }));
 
-    // 6. Return dengan pagination
+
     return {
       success: true,
       message: 'Operation successful',
@@ -159,9 +156,8 @@ async createReport(
     };
   }
 
-  // GET DETAIL REPORT
   async getReportDetail(schoolUserId: string, reportId: string) {
-    // 1. Dapatkan School Profile
+   
     const schoolProfile = await this.prisma.schoolProfile.findUnique({
       where: { userId: schoolUserId },
     });
@@ -170,7 +166,6 @@ async createReport(
       throw new NotFoundException('School profile tidak ditemukan');
     }
 
-    // 2. Fetch report
     const report = await this.prisma.report.findUnique({
       where: { id: reportId },
       include: {
@@ -183,12 +178,11 @@ async createReport(
       throw new NotFoundException('Laporan tidak ditemukan');
     }
 
-    // 3. Verify ownership
+  
     if (report.sekolahId !== schoolProfile.id) {
       throw new ForbiddenException('Anda tidak memiliki akses ke laporan ini');
     }
 
-    // 4. Format response
     return {
       success: true,
       message: 'Operation successful',

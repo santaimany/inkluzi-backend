@@ -58,7 +58,6 @@ export class MlService {
     try {
       this.logger.log(`Starting Gemini analysis for: ${imageUrl}`);
 
-      // Build context about disability types
       const disabilityContext = disabilityTypes
         .map(
           (dt) =>
@@ -66,7 +65,7 @@ export class MlService {
         )
         .join('\n');
 
-      // Create detailed prompt
+    
 const prompt = `
 Analisis gambar makanan ini dan berikan hasil dalam format JSON.
 
@@ -133,10 +132,10 @@ PENTING:
 - Berikan HANYA JSON, tanpa markdown atau teks tambahan
 `;
 
-      // Download image as base64
+  
       const imageBase64 = await this.fetchImageAsBase64(imageUrl);
 
-      // Send to Gemini
+ 
       const result = await this.model.generateContent([
         prompt,
         {
@@ -152,7 +151,7 @@ PENTING:
 
       this.logger.log('Received response from Gemini');
 
-      // Clean markdown if present
+      
       if (responseText.startsWith('```json')) {
         responseText = responseText.slice(7);
       } else if (responseText.startsWith('```')) {
@@ -165,10 +164,10 @@ PENTING:
       
       responseText = responseText.trim();
 
-      // Parse JSON
+
       const analysisResult: MlAnalysisResult = JSON.parse(responseText);
 
-      // Validate confidence score
+
       if (analysisResult.confidence < 0.5) {
         throw new HttpException(
           'Gambar tidak cukup jelas untuk dianalisis. Silakan upload gambar yang lebih jelas.',
@@ -203,7 +202,6 @@ PENTING:
     }
   }
 
- // src/ml/ml.service.ts - method analyzeMenu saja
 
 async analyzeMenu(
   menuName: string,
@@ -213,12 +211,12 @@ async analyzeMenu(
   try {
     this.logger.log('Starting menu analysis with Gemini AI');
 
-    // Build component list string
+
     const componentsList = components
       .map(c => `- ${c.nama}: ${c.porsi}`)
       .join('\n');
 
-    // Build comprehensive prompt for menu analysis
+  
     const prompt = `Kamu adalah ahli nutrisi dan keamanan pangan untuk anak-anak dengan disabilitas.
 
 **DATA MENU:**
@@ -340,10 +338,10 @@ PENTING:
     const response = await result.response;
     let text = response.text();
 
-    // Clean response
+
     text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
-    // Parse JSON
+
     const analysisData: MenuAnalysisResult = JSON.parse(text);
 
     this.logger.log(`Menu analysis completed with confidence: ${analysisData.confidence}`);
@@ -360,9 +358,9 @@ PENTING:
 async generateNutritionDetail(data: {
   nama_menu: string;
   komponen_menu: any[];
-  basic_nutrition?: any; // ← TAMBAH PARAMETER INI
+  basic_nutrition?: any; 
 }): Promise<any> {
-  // Extract komponen
+  
   const komponenList = Array.isArray(data.komponen_menu)
     ? data.komponen_menu
         .map((k) => 
@@ -373,7 +371,7 @@ async generateNutritionDetail(data: {
         .join(', ')
     : data.komponen_menu;
 
-  // Prepare basic nutrition reference if available
+
   const nutritionReference = data.basic_nutrition
     ? `
 GUNAKAN DATA NUTRISI BASIC INI SEBAGAI REFERENSI (jangan ubah nilai total):
@@ -499,7 +497,7 @@ PENTING:
 
     const parsedData = JSON.parse(responseText);
     
-    // Validate
+    
     if (!parsedData.info_nutrisi || !parsedData.komponen_detail) {
       throw new Error('Invalid nutrition data structure');
     }

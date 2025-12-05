@@ -14,7 +14,7 @@ export class NutritionService {
   ) {}
 
  async getNutritionDetail(menuId: string, userId: string, userRole: string) {
-  // 1. Get menu
+
   const menu = await this.prismaService.menu.findUnique({
     where: { id: menuId },
     include: {
@@ -33,10 +33,10 @@ export class NutritionService {
     throw new NotFoundException('Menu tidak ditemukan');
   }
 
-  // 2. Validate access
+
   this.validateAccess(menu, userId, userRole);
 
-  // 3. Check if detailed nutrition already exists
+
   if (menu.detailNutrisi && menu.detailNutrisi !== null) {
     const data = menu.detailNutrisi as any;
     return {
@@ -46,10 +46,9 @@ export class NutritionService {
     };
   }
 
-  // 4. Get basic nutrition data from kandunganGizi
   const basicNutrition = menu.kandunganGizi as any;
 
-  // 5. Parse komponen menu
+
   let komponenMenu;
   try {
     komponenMenu = typeof menu.komponenMenu === 'string' 
@@ -61,16 +60,16 @@ export class NutritionService {
       : menu.komponenMenu;
   }
 
-  // 6. Generate detailed nutrition with basic data as reference
+
   console.log('Generating nutrition detail for menu:', menu.namaMenu);
   
   const nutritionData = await this.mlService.generateNutritionDetail({
     nama_menu: menu.namaMenu,
     komponen_menu: komponenMenu,
-    basic_nutrition: basicNutrition, // ← KIRIM DATA BASIC KE ML
+    basic_nutrition: basicNutrition, 
   });
 
-  // 7. Save to database
+
   await this.prismaService.menu.update({
     where: { id: menuId },
     data: { detailNutrisi: nutritionData },
@@ -91,14 +90,14 @@ export class NutritionService {
 
   private validateAccess(menu: any, userId: string, userRole: string): void {
     if (userRole === 'sppg') {
-      // SPPG must own the menu
+
       if (menu.sppgProfile.userId !== userId) {
         throw new ForbiddenException(
           'Anda tidak memiliki akses ke menu ini',
         );
       }
     } else if (userRole === 'sekolah') {
-      // School must be assigned to the menu
+
       const isAssigned = menu.menuAssignments.some(
         (assignment) => assignment.schoolProfile.userId === userId,
       );
