@@ -16,6 +16,8 @@ import { SppgReportsModule } from './modules/reports/sppg-reports/sppg-reports.m
 import { SchoolReportsModule } from './modules/reports/school-reports/school-reports.module';
 import { SchoolMenusModule } from './modules/menus/school-menus/school-menus.module';
 import { NutritionModule } from './modules/menus/nutrition/nutrition.module';
+import { AdminService } from './modules/admin/admin.service';
+
 
 @Module({
   imports: [
@@ -34,6 +36,6 @@ import { NutritionModule } from './modules/menus/nutrition/nutrition.module';
     NutritionModule,
   ],
   controllers: [AppController, AuthController],
-  providers: [AppService],
+  providers: [AppService, AdminService],
 })
 export class AppModule {}
