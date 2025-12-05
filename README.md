@@ -1,98 +1,256 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Inkluzi MBG Backend API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+[![NestJS](https://img.shields.io/badge/NestJS-v11-E0234E?logo=nestjs)](https://nestjs.com/)
+[![Prisma](https://img.shields.io/badge/Prisma-v7-2D3748?logo=prisma)](https://www.prisma.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker)](https://www.docker.com/)
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Backend API untuk platform **Inkluzi** - Sistem monitoring dan manajemen makanan bergizi untuk anak berkebutuhan khusus di sekolah.
 
-## Description
+## 🚀 Features
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Authentication & Authorization** - JWT-based auth dengan role-based access control (Admin, SPPG, Sekolah)
+- **User Management** - Manajemen user SPPG dan Sekolah dengan approval system
+- **School Assignment** - Assignment sekolah ke SPPG untuk monitoring
+- **Menu Management** - CRUD menu makanan dengan kandungan gizi lengkap
+- **Nutrition Analysis** - AI-powered nutrition analysis menggunakan Google Gemini
+- **Food Scanning** - Upload dan analisis foto makanan
+- **Reporting System** - Sistem pelaporan untuk monitoring makanan sekolah
+- **Email Notifications** - Email activation/deactivation menggunakan SendGrid
+- **API Documentation** - Interactive Swagger/OpenAPI documentation
 
-## Project setup
+## 🛠️ Tech Stack
 
+- **Framework**: NestJS v11
+- **Database**: PostgreSQL 16 dengan Prisma ORM v7
+- **Authentication**: JWT (Access & Refresh Token)
+- **File Upload**: Cloudinary
+- **Email Service**: SendGrid SMTP / Nodemailer
+- **AI Integration**: Google Gemini API
+- **Containerization**: Docker & Docker Compose
+- **CI/CD**: GitHub Actions
+- **Reverse Proxy**: NGINX with SSL (Let's Encrypt)
+
+## 📋 Prerequisites
+
+- Node.js v20+
+- PostgreSQL 16
+- Docker & Docker Compose (for production)
+- Google Gemini API Key
+- Cloudinary Account
+- SendGrid Account (for email)
+
+## 🔧 Installation
+
+### 1. Clone Repository
 ```bash
-$ npm install
+git clone https://github.com/santaimany/inkluzi-backend.git
+cd inkluzi-backend
 ```
 
-## Compile and run the project
-
+### 2. Install Dependencies
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+### 3. Environment Setup
+Copy `.env.example` ke `.env` dan isi dengan credentials Anda
 
+### 4. Database Setup
 ```bash
-# unit tests
-$ npm run test
+# Generate Prisma Client
+npx prisma generate
 
-# e2e tests
-$ npm run test:e2e
+# Run migrations
+npx prisma migrate dev
 
-# test coverage
-$ npm run test:cov
+# Seed database (optional)
+npm run db:seed
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
+### 5. Run Development Server
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run start:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+API akan berjalan di `http://localhost:3000`
 
-## Resources
+Swagger docs: `http://localhost:3000/api/docs`
 
-Check out a few resources that may come in handy when working with NestJS:
+## 🐳 Docker Deployment
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Development
+```bash
+docker-compose up -d
+```
 
-## Support
+### Production
+```bash
+# Build image
+docker build -t inkluzi-backend .
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# Run dengan docker-compose
+docker-compose -f docker-compose.prod.yml up -d
+```
 
-## Stay in touch
+## 📚 API Endpoints
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Authentication
+```
+POST   /auth/register/sppg      - Register SPPG user
+POST   /auth/register/sekolah   - Register school user
+POST   /auth/login              - Login
+POST   /auth/refresh            - Refresh access token
+POST   /auth/logout             - Logout
+```
 
-## License
+### Admin - User Management
+```
+GET    /admin/users             - Get all users (with filters)
+GET    /admin/users/:id         - Get user detail
+PATCH  /admin/users/:id         - Update user status
+DELETE /admin/users/:id         - Delete user
+POST   /admin/sppg/:id          - Assign schools to SPPG
+DELETE /admin/schools/:id        - Unassign school from SPPG
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### SPPG - Menu Management
+```
+GET    /sppg/menus              - Get all menus created by SPPG
+GET    /sppg/menus/:id          - Get menu detail
+POST   /sppg/menus              - Create menu for all assigned schools
+PUT    /sppg/menus/:id          - Update menu
+DELETE /sppg/menus/:id          - Delete menu
+```
+
+### SPPG - Schools
+```
+GET    /sppg/schools            - Get assigned schools list
+GET    /sppg/schools/:id        - Get school detail
+```
+
+### School - Menus
+```
+GET    /school/menus            - Get menus assigned to school
+GET    /school/menus/:id        - Get menu detail
+```
+
+### Nutrition Analysis
+```
+GET    /nutrition/menus/:id     - Get AI-generated nutrition analysis
+```
+
+### Food Scan
+```
+POST   /food-scan               - Upload & analyze food image
+GET    /food-scan               - Get scan history
+GET    /food-scan/:id           - Get scan detail
+```
+
+### SPPG - Reports
+```
+GET    /sppg/reports            - Get reports from assigned schools
+GET    /sppg/reports/:id        - Get report detail
+PATCH  /sppg/reports/:id        - Update report status
+```
+
+### School - Reports
+```
+POST   /school/reports          - Submit new report
+GET    /school/reports          - Get own reports history
+GET    /school/reports/:id      - Get report detail
+```
+
+### Profile
+```
+GET    /profile                 - Get own profile
+PUT    /profile                 - Update profile
+POST   /profile/photo           - Update profile photo
+```
+
+Full API documentation tersedia di `/api/docs` setelah server running.
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with coverage
+npm run test:cov
+
+# Run specific test file
+npm test auth.service.spec.ts
+
+# E2E tests
+npm run test:e2e
+
+# Watch mode
+npm run test:watch
+```
+
+## 📁 Project Structure
+
+```
+src/
+├── config/                 # Configuration files
+├── core/                   # Core modules (Prisma, etc)
+├── modules/               
+│   ├── admin/             # Admin management
+│   ├── auth/              # Authentication & Authorization
+│   ├── food-scan/         # Food scanning feature
+│   ├── menus/             # Menu CRUD & nutrition
+│   ├── profile/           # User profile management
+│   ├── reports/           # Reporting system
+│   └── schools/           # School management
+├── shared/                # Shared services
+│   ├── cloudinary/        # Image upload service
+│   ├── email/             # Email service
+│   └── ml/                # AI/ML services (Gemini)
+├── app.module.ts          # Root module
+└── main.ts                # Application entry point
+
+prisma/
+├── schema.prisma          # Database schema
+├── migrations/            # Database migrations
+└── seed.ts               # Database seeding
+
+test/                      # E2E tests
+```
+
+## 🔒 Security Features
+
+- ✅ **HTTPS/SSL** - Let's Encrypt certificate
+- ✅ **JWT Authentication** - Access & refresh token strategy
+- ✅ **Rate Limiting** - Prevent brute force & DDoS
+- ✅ **CORS** - Whitelist domain yang diizinkan
+- ✅ **Helmet** - Security headers (XSS, clickjacking protection)
+- ✅ **Input Validation** - class-validator untuk semua DTOs
+- ✅ **Password Hashing** - bcrypt dengan salt rounds
+- ✅ **Role-based Access Control** - Guard untuk setiap endpoint
+
+## 🚀 Deployment
+
+Project ini menggunakan **GitHub Actions CI/CD** untuk automated deployment ke VPS.
+
+### Production URL
+- API: `https://api.inkluzi.my.id/api/v1`
+- Docs: `https://api.inkluzi.my.id/api/docs`
+
+### CI/CD Pipeline
+1. Push ke branch `main` → trigger GitHub Actions
+2. Build Docker image
+3. Push image ke Docker Hub / Registry
+4. Deploy ke VPS via SSH
+5. Run migrations & restart containers
+
+## 👨‍💻 Author
+
+**Santaimany**
+- GitHub: [@santaimany](https://github.com/santaimany)
+- Email: santaimany@gmail.com
+
+---
+
+**Made with ❤️ for MBG Gizi Inklusif**
