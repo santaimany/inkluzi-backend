@@ -2,20 +2,25 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('/api/v1');
    app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,           // Hapus properties yang tidak ada di DTO
-      forbidNonWhitelisted: true, // Throw error jika ada property tidak dikenal
-      transform: true,            // Auto-transform payload ke DTO instance
+      whitelist: true,           
+      forbidNonWhitelisted: true, 
+      transform: true,           
       transformOptions: {
-        enableImplicitConversion: true, // Auto-convert types (string ke number, dll)
+        enableImplicitConversion: true, 
       },
     }),
   );
+  app.enableCors({
+    origin: ['http://localhost:3000', 'https://inkluzi.my.id', 'https://inkluzi.vercel.app', 'http://localhost:3001'],
+    credentials: true,
+  })
 
    const config = new DocumentBuilder()
     .setTitle('Inkluzi MBG API Documentation')
@@ -30,7 +35,7 @@ async function bootstrap() {
         description: 'Enter JWT token',
         in: 'header',
       },
-      'JWT-auth', // This name here is important for matching up with @ApiBearerAuth() in your controllers
+      'JWT-auth', 
     )
     .build();
 

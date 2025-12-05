@@ -33,6 +33,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.3",
+    "@nestjs/throttler": "^6.5.0",
     "@prisma/adapter-pg": "^7.0.1",
     "@prisma/client": "^7.0.1",
     "axios": "^1.13.2",
@@ -95,8 +96,8 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
-     "moduleNameMapper": {
-    "^src/(.*)$": "<rootDir>/$1"
-  }
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
+    }
   }
 }

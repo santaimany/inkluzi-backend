@@ -17,6 +17,8 @@ import { SchoolReportsModule } from './modules/reports/school-reports/school-rep
 import { SchoolMenusModule } from './modules/menus/school-menus/school-menus.module';
 import { NutritionModule } from './modules/menus/nutrition/nutrition.module';
 import { AdminService } from './modules/admin/admin.service';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 
 @Module({
@@ -34,8 +36,15 @@ import { AdminService } from './modules/admin/admin.service';
     SchoolReportsModule,
     SchoolMenusModule,
     NutritionModule,
+    ThrottlerModule.forRoot([{
+      ttl: 10000,
+      limit: 15,
+    }])
   ],
   controllers: [AppController, AuthController],
-  providers: [AppService, AdminService],
+  providers: [AppService, AdminService, {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    }],
 })
 export class AppModule {}
