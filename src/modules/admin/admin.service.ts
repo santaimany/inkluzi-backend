@@ -53,12 +53,17 @@ export class AdminService {
         createdAt: true,
         sppgProfile: {
           select: {
+            id: true,
             namaInstansi: true,
+            _count: {
+              select: { schoolProfiles: true },
+            }
           }
         },
         schoolProfile: {
           select: {
             namaSekolah: true,
+            totalSiswa: true,
           }
         }
       },
@@ -74,6 +79,12 @@ export class AdminService {
       status: user.status,
       createdAt: user.createdAt,
       profile_name: user.role === 'sppg' ? user.sppgProfile?.namaInstansi : user.schoolProfile?.namaSekolah,
+      ...user.role === 'sppg' && {
+        jumlah_sekolah: user.sppgProfile?._count?.schoolProfiles || 0,
+      },
+      ...user.role === 'sekolah' && {
+        total_siswa: user.schoolProfile?.totalSiswa || 0,
+      },
       created_at: user.createdAt,
     }))
 
