@@ -229,12 +229,13 @@ ${componentsList}
 ${disabilityTypes.length > 0 ? disabilityTypes.join(', ') : 'Tidak ada data spesifik'}
 
 **STANDAR ANGKA KECUKUPAN GIZI (AKG) ANAK USIA 7-12 TAHUN:**
-- Energi: 2000 kkal/hari (untuk 1 kali makan ±600-700 kkal)
+- Energi: 2000 kkal/hari (untuk 1 kali makan ±500-800 kkal)
 - Karbohidrat: 300g/hari
-- Protein: 66g/hari
+- Protein: 66g/hari (minimal 15g per makan)
 - Lemak: 65g/hari
-- Serat: 30g/hari
-- Natrium: max 2300mg/hari
+- Serat: 30g/hari (minimal 5g per makan)
+- Gula: max 50g/hari (max 15g per makan)
+- Natrium: max 2300mg/hari (max 900mg per makan)
 
 **INSTRUKSI ANALISIS:**
 
@@ -247,91 +248,147 @@ ${disabilityTypes.length > 0 ? disabilityTypes.join(', ') : 'Tidak ada data spes
    - Serat (gram)
    - Sodium (mg)
 
-2. **DETEKSI RISIKO** yang dikelompokkan dalam 3 kategori:
-   
-   a. **ALERGI:**
-      - Identifikasi bahan yang berpotensi menyebabkan alergi
-      - Contoh: "Tidak ada bahan dengan potensi alergi tinggi."
-      - Atau: "Mengandung seafood, perlu perhatian untuk alergi ikan."
-   
-   b. **TEKSTUR:**
-      - Evaluasi tekstur makanan untuk anak dengan disabilitas
-      - Contoh: "Ikan empuk → aman untuk siswa sensitif tekstur."
-      - Atau: "Tekstur bervariasi, cocok untuk stimulasi sensorik."
-   
-   c. **PORSI_GIZI:**
-      - Evaluasi kecukupan gizi dibanding AKG
-      - Contoh: "Semua porsi gizi berada dalam rentang standar MBG."
-      - Atau: "Kalori tinggi (800 kkal), melebihi standar 1 kali makan."
-      - Berikan warning jika ada kelebihan/kekurangan signifikan
+2. **EVALUASI PARAMETER DENGAN SISTEM SCORING:**
 
-3. **REKOMENDASI:**
-   - Berikan saran perbaikan jika ada risiko (maksimal 2 kalimat)
-   - Atau konfirmasi menu sudah sesuai
-   - Contoh: "Tidak memerlukan tindakan khusus, menu aman untuk semua kelompok siswa."
+   Berikan poin untuk setiap parameter berikut:
+   
+   a. **KALORI** (per porsi):
+      - 500-800 kkal → +1 poin (AMAN)
+      - 400-499 atau 801-900 kkal → 0 poin (WARNING)
+      - <400 atau >950 kkal → -2 poin (MERAH)
+   
+   b. **PROTEIN** (per porsi):
+      - ≥15g → +1 poin (AMAN)
+      - 10-14g → 0 poin (WARNING)
+      - <10g → -2 poin (MERAH)
+   
+   c. **SODIUM** (per porsi):
+      - <900mg → +1 poin (AMAN)
+      - 900-1200mg → 0 poin (WARNING)
+      - >1300mg → -2 poin (MERAH)
+   
+   d. **GULA** (per porsi):
+      - <15g → +1 poin (AMAN, gula dari buah segar tidak dihitung)
+      - 15-20g → 0 poin (WARNING)
+      - >25g → -2 poin (MERAH)
+   
+   e. **LEMAK** (per porsi):
+      - 10-25g → +1 poin (AMAN)
+      - 25-35g → 0 poin (WARNING)
+      - >40g atau <5g → -2 poin (MERAH)
+   
+   f. **SERAT** (per porsi):
+      - ≥5g → +1 poin (AMAN)
+      - 3-4g → 0 poin (WARNING)
+      - <3g → -2 poin (MERAH)
+   
+   g. **TEKSTUR** (untuk disabilitas):
+      - Semua komponen empuk/mudah dikunyah → +1 poin (AMAN)
+      - Ada komponen agak keras tapi masih OK → 0 poin (WARNING)
+      - Ada komponen sangat keras/berisiko tersedak → -2 poin (MERAH)
+   
+   h. **ALERGEN**:
+      - Tidak ada alergen umum → +1 poin (AMAN)
+      - Ada alergen tapi umum dan terkontrol (misal: ikan, telur) → 0 poin (WARNING)
+      - Ada alergen tinggi/multipel (seafood+kacang+susu) → -2 poin (MERAH)
 
-4. **STATUS AMAN:**
-   - "aman" jika tidak ada risiko signifikan
-   - "perlu_perhatian" jika ada risiko yang perlu diperhatikan tapi masih bisa dikonsumsi
-   - "tidak_aman" jika ada risiko serius dan sebaiknya tidak dikonsumsi
+3. **TENTUKAN STATUS BERDASARKAN TOTAL POIN:**
+   - **≥6 poin** → status: "aman"
+   - **2 hingga 5 poin** → status: "perlu_perhatian"
+   - **≤1 poin** → status: "tidak_aman"
 
-5. **CONFIDENCE SCORE:**
-   - Berikan confidence 0-100 berdasarkan:
-     * Kelengkapan data komponen (70-100 jika lengkap)
-     * Kejelasan porsi (90-100 jika sangat jelas, 60-80 jika estimasi)
-     * Ketersediaan data nutrisi (95-100 jika makanan umum, 70-90 jika makanan khusus)
+4. **DETEKSI RISIKO** - Catat hanya parameter yang bernilai WARNING (0 poin) atau MERAH (-2 poin):
+   
+   Jika ada masalah, kelompokkan dalam 3 kategori:
+   
+   a. **alergi**: Bahan yang berpotensi alergi (hanya jika skor alergen ≤0)
+      - Contoh: "Mengandung ikan, perlu perhatian untuk siswa alergi seafood."
+   
+   b. **tekstur**: Evaluasi tekstur (hanya jika skor tekstur ≤0)
+      - Contoh: "Tumis buncis agak keras, perhatikan untuk siswa dengan masalah mengunyah."
+   
+   c. **porsi_gizi**: Masalah nutrisi signifikan (hanya parameter dengan skor ≤0)
+      - Contoh: "Sodium tinggi (1200mg), melebihi standar per makan."
+      - Atau: "Protein rendah (8g), kurang dari kebutuhan minimal."
+
+   **PENTING**: Jika SEMUA parameter mendapat +1 (total poin = 8), maka deteksi_risiko = {}
+
+5. **REKOMENDASI:**
+   - Jika total poin ≥6: "Tidak memerlukan tindakan khusus, menu aman untuk semua kelompok siswa."
+   - Jika total poin 2-5: Berikan saran perbaikan 1-2 kalimat untuk parameter WARNING/MERAH
+   - Jika total poin ≤1: Berikan rekomendasi tegas untuk perbaikan/penggantian menu
+
+6. **CONFIDENCE SCORE:**
+   - 90-100: Data komponen lengkap dan jelas
+   - 75-89: Data cukup lengkap, beberapa estimasi
+   - 60-74: Banyak estimasi, perlu verifikasi
+
+**CONTOH EVALUASI:**
+
+Menu A: Nasi 150g + Ayam Goreng 80g + Tumis Sayur 100g + Pisang 1 buah
+Estimasi: Kalori 650, Protein 28g, Sodium 680mg, Gula 12g (dari pisang), Lemak 18g, Serat 7g
+Skor: Kalori +1, Protein +1, Sodium +1, Gula +1, Lemak +1, Serat +1, Tekstur +1, Alergen +1 = **8 poin → AMAN**
+
+Menu B: Nasi 200g + Ikan Asin 100g + Kerupuk 50g + Teh Manis 200ml
+Estimasi: Kalori 720, Protein 32g, Sodium 1400mg, Gula 18g, Lemak 15g, Serat 3g
+Skor: Kalori +1, Protein +1, Sodium -2 (1400mg), Gula 0 (18g), Lemak +1, Serat 0 (3g), Tekstur 0 (kerupuk keras), Alergen 0 (ikan) = **1 poin → TIDAK AMAN**
+
+Menu C: Nasi 120g + Tempe Goreng 60g + Sayur Asem 150g + Jeruk 1 buah
+Estimasi: Kalori 480, Protein 16g, Sodium 850mg, Gula 10g, Lemak 12g, Serat 8g
+Skor: Kalori 0 (480 kkal), Protein +1, Sodium +1, Gula +1, Lemak +1, Serat +1, Tekstur +1, Alergen +1 = **7 poin → AMAN**
+
+Menu D: Mie Instan + Sosis + Minuman Bersoda
+Estimasi: Kalori 820, Protein 12g, Sodium 1800mg, Gula 35g, Lemak 28g, Serat 2g
+Skor: Kalori 0 (820), Protein 0 (12g), Sodium -2 (1800mg), Gula -2 (35g), Lemak 0 (28g), Serat -2 (2g), Tekstur +1, Alergen +1 = **-6 poin → TIDAK AMAN**
 
 **FORMAT OUTPUT (WAJIB JSON VALID):**
 {
   "deteksi_risiko": {
-    "alergi": ["Tidak ada bahan dengan potensi alergi tinggi."],
-    "tekstur": ["Ikan empuk → aman untuk siswa sensitif tekstur."],
-    "porsi_gizi": ["Semua porsi gizi berada dalam rentang standar MBG."]
+    "porsi_gizi": ["Sodium tinggi (1400mg), melebihi standar per makan.", "Serat rendah (3g), kurang dari target minimal."],
+    "tekstur": ["Kerupuk keras, berisiko untuk siswa dengan kesulitan mengunyah."],
+    "alergi": ["Mengandung ikan asin, perhatikan untuk siswa alergi seafood."]
   },
   "kandungan_gizi": {
-    "kalori_total": 590,
-    "karbohidrat": 76,
+    "kalori_total": 720,
+    "karbohidrat": 98,
+    "protein": 32,
+    "lemak": 15,
+    "gula": 18,
+    "serat": 3,
+    "sodium": 1400
+  },
+  "rekomendasi": "Ganti ikan asin dengan ikan segar untuk menurunkan sodium. Tambahkan 100g sayuran hijau untuk meningkatkan serat. Hindari kerupuk untuk siswa sensitif tekstur.",
+  "status_aman": "tidak_aman",
+  "confidence": 88
+}
+
+ATAU jika menu sangat baik (8 poin):
+
+{
+  "deteksi_risiko": {},
+  "kandungan_gizi": {
+    "kalori_total": 650,
+    "karbohidrat": 85,
     "protein": 28,
-    "lemak": 14,
-    "gula": 10,
+    "lemak": 18,
+    "gula": 12,
     "serat": 7,
     "sodium": 680
   },
   "rekomendasi": "Tidak memerlukan tindakan khusus, menu aman untuk semua kelompok siswa.",
   "status_aman": "aman",
-  "confidence": 92
+  "confidence": 95
 }
 
-ATAU jika ada masalah:
-
-{
-  "deteksi_risiko": {
-    "alergi": ["Mengandung ikan, hindari untuk siswa dengan alergi seafood."],
-    "tekstur": ["Tumis buncis agak keras, perhatikan untuk siswa dengan masalah mengunyah."],
-    "porsi_gizi": ["Kalori tinggi (800 kkal), melebihi standar 1 kali makan.", "Sodium tinggi (1200mg), 52% dari AKG harian."]
-  },
-  "kandungan_gizi": {
-    "kalori_total": 800,
-    "karbohidrat": 95,
-    "protein": 35,
-    "lemak": 25,
-    "gula": 18,
-    "serat": 5,
-    "sodium": 1200
-  },
-  "rekomendasi": "Kurangi porsi nasi 30g dan ganti garam dengan bumbu alami. Tambahkan 50g sayuran hijau untuk meningkatkan serat.",
-  "status_aman": "perlu_perhatian",
-  "confidence": 88
-}
-
-Analisis dengan teliti dan objektif. Pastikan output adalah JSON valid yang bisa di-parse.
+Analisis dengan sistem scoring yang objektif. Pastikan output adalah JSON valid.
 
 PENTING:
+- Hitung poin SEMUA 8 parameter (kalori, protein, sodium, gula, lemak, serat, tekstur, alergen)
+- Total poin menentukan status: ≥6 = aman, 2-5 = perlu_perhatian, ≤1 = tidak_aman
+- deteksi_risiko hanya berisi kategori dengan parameter WARNING/MERAH (skor ≤0)
+- Gula dari buah segar (pisang, jeruk, apel) tidak dihitung sebagai masalah
+- 1-2 parameter WARNING tidak membuat menu "tidak_aman"
 - confidence dalam skala 0-100 (integer)
-- deteksi_risiko adalah OBJECT dengan key dinamis (hanya kategori yang ada risiko)
-- Jika tidak ada risiko sama sekali, deteksi_risiko = {}
-- Setiap kategori berisi array of string
-- Rekomendasi maksimal 1 kalimat singkat atau null
 - Berikan HANYA JSON, tanpa markdown atau teks tambahan`;
 
     const result = await this.model.generateContent(prompt);
