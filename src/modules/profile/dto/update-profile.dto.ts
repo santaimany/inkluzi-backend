@@ -23,7 +23,7 @@ export class UpdateDisabilityTypeDto {
     description: 'Jumlah siswa dengan jenis disabilitas tersebut',
     example: 30,
   })
-  @IsString()
+  @IsInt()
   jumlah_siswa: number;
 }
 
