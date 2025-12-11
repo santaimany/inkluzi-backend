@@ -13,26 +13,27 @@ export class EmailService {
     const smtpUser = this.configService.get('SMTP_USER');
 
     if (!smtpHost || !smtpUser) {
-      this.logger.warn('Email not configured. Email notifications will be disabled.');
+      this.logger.warn(
+        'Email not configured. Email notifications will be disabled.',
+      );
       this.emailEnabled = false;
       return;
     }
 
     this.emailEnabled = true;
-    
+
     const smtpPort = this.configService.get<number>('SMTP_PORT', 587);
-    
+
     this.transporter = nodemailer.createTransport({
       host: smtpHost,
       port: smtpPort,
-      secure: smtpPort === 465, 
+      secure: smtpPort === 465,
       auth: {
         user: smtpUser,
         pass: this.configService.get('SMTP_PASS'),
       },
     });
 
-  
     this.transporter.verify((error) => {
       if (error) {
         this.logger.error('SMTP connection error:', error);
@@ -42,14 +43,24 @@ export class EmailService {
       }
     });
   }
-async sendAccountActivationEmail(email: string, name: string, role: string): Promise<void> {
+  async sendAccountActivationEmail(
+    email: string,
+    name: string,
+    role: string,
+  ): Promise<void> {
     if (!this.emailEnabled) {
-      this.logger.warn(`Email disabled - would have sent activation email to: ${email}`);
+      this.logger.warn(
+        `Email disabled - would have sent activation email to: ${email}`,
+      );
       return;
     }
 
-    const loginUrl = this.configService.get('FRONTEND_URL') || 'https://inkluzi.my.id';
-    const roleName = role === 'sppg' ? 'SPPG (Satuan Pelayanan Pangan Bergizi)' : 'Pihak Sekolah';
+    const loginUrl =
+      this.configService.get('FRONTEND_URL') || 'https://inkluzi.my.id';
+    const roleName =
+      role === 'sppg'
+        ? 'SPPG (Satuan Pelayanan Pangan Bergizi)'
+        : 'Pihak Sekolah';
 
     try {
       const mailOptions = {
@@ -131,9 +142,15 @@ async sendAccountActivationEmail(email: string, name: string, role: string): Pro
     }
   }
 
-  async sendAccountDeactivationEmail(email: string, name: string, role: string): Promise<void> {
+  async sendAccountDeactivationEmail(
+    email: string,
+    name: string,
+    role: string,
+  ): Promise<void> {
     if (!this.emailEnabled) {
-      this.logger.warn(`Email disabled - would have sent deactivation email to: ${email}`);
+      this.logger.warn(
+        `Email disabled - would have sent deactivation email to: ${email}`,
+      );
       return;
     }
 
@@ -199,6 +216,104 @@ async sendAccountActivationEmail(email: string, name: string, role: string): Pro
       this.logger.log(`Deactivation email sent to: ${email}`);
     } catch (error) {
       this.logger.error(`Failed to send email to ${email}:`, error);
+    }
+  }
+
+  /**
+   * Send password reset email with token
+   */
+  async sendPasswordResetEmail(
+    email: string,
+    resetToken: string,
+  ): Promise<void> {
+    const frontendUrl =
+      this.configService.get('FRONTEND_URL') || 'https://inkluzi.my.id';
+    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+
+    const mailOptions = {
+      from: this.configService.get('SMTP_FROM'),
+      to: email,
+      subject: '🔐 Reset Password - MBG Inkluzi',
+      html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb; border-radius: 10px;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h2 style="color: #2563eb; margin-bottom: 20px; text-align: center;">
+            🔐 Reset Password Anda
+          </h2>
+          
+          <p style="color: #374151; line-height: 1.6; margin-bottom: 15px;">
+            Halo,
+          </p>
+          
+          <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
+            Kami menerima permintaan untuk mereset password akun Anda di <strong>MBG Inkluzi</strong>.
+          </p>
+          
+          <p style="color: #374151; line-height: 1.6; margin-bottom: 25px;">
+            Klik tombol di bawah ini untuk membuat password baru:
+          </p>
+          
+          <div style="text-align: center; margin: 35px 0;">
+            <a href="${resetUrl}" 
+               style="background-color: #2563eb; 
+                      color: white; 
+                      padding: 14px 40px; 
+                      text-decoration: none; 
+                      border-radius: 6px; 
+                      display: inline-block;
+                      font-weight: 600;
+                      font-size: 16px;">
+              Reset Password Sekarang
+            </a>
+          </div>
+          
+          <div style="background-color: #fef3c7; padding: 15px; border-radius: 6px; border-left: 4px solid #f59e0b; margin: 25px 0;">
+            <p style="color: #92400e; margin: 0; font-size: 14px;">
+              ⚠️ <strong>Penting:</strong> Link ini akan expired dalam <strong>1 jam</strong>.
+            </p>
+          </div>
+          
+          <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 15px;">
+            Jika Anda <strong>tidak meminta</strong> reset password, abaikan email ini dan password Anda tetap aman.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 25px 0;">
+          
+          <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-top: 20px;">
+            <p style="color: #6b7280; font-size: 12px; margin: 0 0 10px 0;">
+              Jika tombol tidak berfungsi, copy dan paste link berikut ke browser:
+            </p>
+            <p style="margin: 0;">
+              <a href="${resetUrl}" 
+                 style="color: #2563eb; 
+                        font-size: 12px; 
+                        word-break: break-all;">
+                ${resetUrl}
+              </a>
+            </p>
+          </div>
+          
+          <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 25px; margin-bottom: 0;">
+            Email ini dikirim secara otomatis, mohon tidak membalas email ini.
+          </p>
+        </div>
+        
+        <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 20px;">
+          © 2025 MBG Inkluzi - Sistem Manajemen Menu Bergizi
+        </p>
+      </div>
+    `,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      this.logger.log(`Password reset email sent to ${email}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send password reset email to ${email}`,
+        error.message,
+      );
+      throw new Error('Gagal mengirim email reset password');
     }
   }
 }
