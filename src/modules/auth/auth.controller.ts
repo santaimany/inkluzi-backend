@@ -8,6 +8,8 @@ import { LoginDto } from './dto/login.dto';
 
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -16,9 +18,10 @@ export class AuthController {
 
   @Post('register/sppg')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Register SPPG',
-    description: 'Registrasi akun SPPG baru. Status awal: pending (perlu approval admin)'
+    description:
+      'Registrasi akun SPPG baru. Status awal: pending (perlu approval admin)',
   })
   @SwaggerResponse({
     status: 201,
@@ -29,10 +32,10 @@ export class AuthController {
         message: 'User registered successfully',
         data: {
           user_id: 'uuid-of-new-user',
-          status: 'pending'
-        }
-      }
-    }
+          status: 'pending',
+        },
+      },
+    },
   })
   @SwaggerResponse({ status: 409, description: 'Email sudah terdaftar' })
   async registerSppg(@Body() dto: RegisterSppgDto) {
@@ -41,9 +44,10 @@ export class AuthController {
 
   @Post('register/sekolah')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Register Sekolah',
-    description: 'Registrasi akun Sekolah baru. Status awal: pending (perlu approval admin)'
+    description:
+      'Registrasi akun Sekolah baru. Status awal: pending (perlu approval admin)',
   })
   @SwaggerResponse({
     status: 201,
@@ -54,10 +58,10 @@ export class AuthController {
         message: 'User registered successfully',
         data: {
           user_id: 'uuid-of-new-user',
-          status: 'pending'
-        }
-      }
-    }
+          status: 'pending',
+        },
+      },
+    },
   })
   @SwaggerResponse({ status: 409, description: 'Email sudah terdaftar' })
   async registerSekolah(@Body() dto: RegisterSekolahDto) {
@@ -66,9 +70,10 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'User Login',
-    description: 'Autentikasi user dan mendapatkan access token serta refresh token'
+    description:
+      'Autentikasi user dan mendapatkan access token serta refresh token',
   })
   @SwaggerResponse({
     status: 200,
@@ -85,10 +90,10 @@ export class AuthController {
             status: 'active | pending | inactive',
           },
           access_token: 'jwt-access-token',
-          refresh_token: 'jwt-refresh-token'
-        }
-      }
-    }
+          refresh_token: 'jwt-refresh-token',
+        },
+      },
+    },
   })
   @SwaggerResponse({ status: 401, description: 'Email atau password salah' })
   async login(@Body() dto: LoginDto) {
@@ -97,9 +102,9 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Refresh Token',
-    description: 'Mendapatkan access token baru menggunakan refresh token'
+    description: 'Mendapatkan access token baru menggunakan refresh token',
   })
   @SwaggerResponse({
     status: 200,
@@ -110,12 +115,15 @@ export class AuthController {
         message: 'Token refreshed successfully',
         data: {
           access_token: 'new-jwt-access-token',
-          refresh_token: 'new-jwt-refresh-token'
-        }
-      }
-    }
+          refresh_token: 'new-jwt-refresh-token',
+        },
+      },
+    },
   })
-  @SwaggerResponse({ status: 401, description: 'Refresh token tidak valid atau sudah kadaluarsa' })
+  @SwaggerResponse({
+    status: 401,
+    description: 'Refresh token tidak valid atau sudah kadaluarsa',
+  })
   async refresh(@Body() dto: RefreshTokenDto) {
     return await this.authService.refreshToken(dto.refresh_token);
   }
@@ -124,9 +132,9 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'User Logout',
-    description: 'Menghapus refresh token saat user logout'
+    description: 'Menghapus refresh token saat user logout',
   })
   @SwaggerResponse({
     status: 200,
@@ -135,13 +143,54 @@ export class AuthController {
       example: {
         success: true,
         message: 'Logout successful',
-      }
-    }
+      },
+    },
   })
   @SwaggerResponse({ status: 401, description: 'Unauthorized' })
   async logout(@Request() req, @Body() dto: RefreshTokenDto) {
     return await this.authService.logout(req.user.userId, dto.refresh_token);
   }
 
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @SwaggerResponse({
+    status: 200,
+    description: 'Email reset password berhasil dikirim',
+    schema: {
+      example: {
+        success: true,
+        message:
+          'Jika email terdaftar, link reset password telah dikirim ke email Anda',
+      },
+    },
+  })
+  @SwaggerResponse({
+    status: 400,
+    description: 'Bad Request - Email tidak valid',
+  })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
 
+ 
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @SwaggerResponse({
+    status: 200,
+    description: 'Password berhasil direset',
+    schema: {
+      example: {
+        success: true,
+        message:
+          'Password berhasil direset. Silakan login dengan password baru Anda.',
+      },
+    },
+  })
+  @SwaggerResponse({
+    status: 400,
+    description: 'Bad Request - Token tidak valid atau expired',
+  })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetPasswordDto);
+  }
 }

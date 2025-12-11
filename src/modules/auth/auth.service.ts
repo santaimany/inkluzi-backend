@@ -1,61 +1,66 @@
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'node:crypto';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RegisterSppgDto } from './dto/register-sppg.dto';
 import { RegisterSekolahDto } from './dto/register-sekolah.dto';
 import { LoginDto } from './dto/login.dto';
+import { EmailService } from 'src/shared/email/email.service';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private prisma: PrismaService,
-    private jwtService: JwtService,
-    private configService: ConfigService,
-  ){ }
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly emailService: EmailService,
+  ) {}
 
   async registerSppg(dto: RegisterSppgDto) {
-   await this.checkEmailAvailability(dto.email);
+    await this.checkEmailAvailability(dto.email);
 
-  const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-  const user = await this.prisma.user.create({
-    data: {
-      email: dto.email,
-      passwordHash: hashedPassword,
-      role: 'sppg',
-      status: 'pending',
-      sppgProfile: {
-        create: {
-          namaInstansi: dto.nama_instansi,
-          wilayahKerja: dto.wilayah_kerja,
-          alamat: dto.alamat,
-          penanggungJawab: dto.penanggung_jawab,
-          nomorKontak: dto.nomor_kontak,
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        passwordHash: hashedPassword,
+        role: 'sppg',
+        status: 'pending',
+        sppgProfile: {
+          create: {
+            namaInstansi: dto.nama_instansi,
+            wilayahKerja: dto.wilayah_kerja,
+            alamat: dto.alamat,
+            penanggungJawab: dto.penanggung_jawab,
+            nomorKontak: dto.nomor_kontak,
+          },
         },
       },
-    },
-  });
+    });
 
-  return {
-    success: true,
+    return {
+      success: true,
       message: 'User registered successfully',
       data: {
         user_id: user.id,
         status: user.status,
       },
-  }
+    };
   }
 
   async registerSekolah(dto: RegisterSekolahDto) {
     await this.checkEmailAvailability(dto.email);
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     const existingNpsn = await this.prisma.schoolProfile.findUnique({
-      where: { npsn: dto.npsn }
-    })
+      where: { npsn: dto.npsn },
+    });
 
-    if(existingNpsn) {
+    if (existingNpsn) {
       throw new ConflictException('NPSN sudah terdaftar');
     }
 
@@ -85,47 +90,51 @@ export class AuthService {
       },
     });
 
-     return {
-    success: true,
+    return {
+      success: true,
       message: 'User registered successfully',
       data: {
         user_id: user.id,
         status: user.status,
       },
-  }
+    };
   }
 
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email},
+      where: { email: dto.email },
       include: {
         sppgProfile: true,
         schoolProfile: true,
       },
     });
 
-    if(!user){
+    if (!user) {
       throw new UnauthorizedException('Email atau password salah');
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
-    if(!isPasswordValid){
+    const isPasswordValid = await bcrypt.compare(
+      dto.password,
+      user.passwordHash,
+    );
+    if (!isPasswordValid) {
       throw new UnauthorizedException('Email atau password salah');
     }
-    if(user.status !== 'active') {
-      throw new UnauthorizedException('Akun belum diverifikasi. Silakan tunggu konfirmasi dari admin.');
+    if (user.status !== 'active') {
+      throw new UnauthorizedException(
+        'Akun belum diverifikasi. Silakan tunggu konfirmasi dari admin.',
+      );
     }
 
     const tokens = await this.generateTokens(user.id, user.email, user.role);
 
-      const userData: any = {
+    const userData: any = {
       id: user.id,
       email: user.email,
       role: user.role,
       status: user.status,
       created_at: user.createdAt.toISOString(),
     };
-
 
     return {
       success: true,
@@ -134,32 +143,36 @@ export class AuthService {
         user: userData,
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
-    }
-  }
+      },
+    };
   }
 
   async refreshToken(refreshToken: string) {
     try {
-      const payload = this.jwtService.verify(refreshToken,{
+      const payload = this.jwtService.verify(refreshToken, {
         secret: this.configService.get<string>('JWT_SECRET'),
       });
       const storedToken = await this.prisma.refreshToken.findUnique({
-        where: { 
+        where: {
           token: refreshToken,
           userId: payload.sub,
           expiresAt: {
             gt: new Date(),
-          }
+          },
         },
-      })
+      });
 
-      if(!storedToken){
+      if (!storedToken) {
         throw new UnauthorizedException('Invalid or expired refresh token');
       }
 
-      const tokens = await this.generateTokens(payload.sub, payload.email, payload.role); 
+      const tokens = await this.generateTokens(
+        payload.sub,
+        payload.email,
+        payload.role,
+      );
       await this.prisma.refreshToken.delete({
-        where: {id: storedToken.id},
+        where: { id: storedToken.id },
       });
       return {
         success: true,
@@ -168,60 +181,168 @@ export class AuthService {
           access_token: tokens.access_token,
           refresh_token: tokens.refresh_token,
         },
-      }
-
+      };
     } catch (error) {
-      throw new UnauthorizedException('Invalid or expired refresh token' + error.message);
+      throw new UnauthorizedException(
+        'Invalid or expired refresh token' + error.message,
+      );
     }
   }
 
   async logout(userId: string, refreshToken: string) {
-     if(!refreshToken) {
+    if (!refreshToken) {
       throw new UnauthorizedException('Invalid refresh token');
     }
-     const storedToken = await this.prisma.refreshToken.findFirst({
-    where: {
-      userId: userId,
-      token: refreshToken,
-      expiresAt: {
-        gt: new Date(), // Token belum expired
-      }
-    }
-  });
+    const storedToken = await this.prisma.refreshToken.findFirst({
+      where: {
+        userId: userId,
+        token: refreshToken,
+        expiresAt: {
+          gt: new Date(), // Token belum expired
+        },
+      },
+    });
 
-  if (!storedToken) {
-    throw new UnauthorizedException('Refresh token tidak valid atau sudah logout');
-  }
-
-  await this.prisma.refreshToken.delete({
-    where: {
-      id: storedToken.id,
+    if (!storedToken) {
+      throw new UnauthorizedException(
+        'Refresh token tidak valid atau sudah logout',
+      );
     }
-  });
-   
+
+    await this.prisma.refreshToken.delete({
+      where: {
+        id: storedToken.id,
+      },
+    });
 
     return {
       success: true,
       message: 'Logout successful',
-    }
+    };
   }
 
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    const { email } = forgotPasswordDto;
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+   
+    if (!user) {
+      return {
+        success: true,
+        message:
+          'Jika email terdaftar, link reset password telah dikirim ke email Anda',
+      };
+    }
+
+ 
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+
+    
+    const resetExpires = new Date();
+    resetExpires.setHours(resetExpires.getHours() + 1);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: resetExpires,
+      },
+    });
+
+
+    try {
+      await this.emailService.sendPasswordResetEmail(email, resetToken);
+    } catch (error) {
+  
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          resetPasswordToken: null,
+          resetPasswordExpires: null,
+        },
+      });
+      throw new Error('Gagal mengirim email reset password');
+    }
+
+    return {
+      success: true,
+      message:
+        'Jika email terdaftar, link reset password telah dikirim ke email Anda',
+    };
+  }
+
+ 
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    const { token, new_password } = resetPasswordDto;
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await this.prisma.user.findFirst({
+      where: {
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: {
+          gt: new Date(), 
+        },
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException(
+        'Token tidak valid atau sudah expired. Silakan request reset password lagi.',
+      );
+    }
+
+   
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: hashedPassword, 
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+      },
+    });
+
+    return {
+      success: true,
+      message:
+        'Password berhasil direset. Silakan login dengan password baru Anda.',
+    };
+  }
 
   //+++++++++++++++++++++++++++++++++++
   // Helper Methods
   //+++++++++++++++++++++++++++++++++++
 
   private async checkEmailAvailability(email: string) {
-    const existingUser = await this.prisma.user.findUnique({ where: { email } });
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
     if (existingUser) throw new ConflictException('Email sudah terdaftar');
   }
 
-  
   private async generateTokens(userId: string, email: string, role: string) {
     const payload = { sub: userId, email, role };
 
     const accessExpiresIn = this.configService.get('JWT_EXPIRES_IN') || '15m';
-    const refreshExpiresIn = this.configService.get('JWT_REFRESH_EXPIRES_IN') || '7d';
+    const refreshExpiresIn =
+      this.configService.get('JWT_REFRESH_EXPIRES_IN') || '7d';
 
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: accessExpiresIn,
@@ -245,7 +366,6 @@ export class AuthService {
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
-    }
-    
+    };
   }
 }
