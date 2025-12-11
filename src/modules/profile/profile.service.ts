@@ -83,6 +83,7 @@ async updateMyProfile(
         },
         schoolProfile: {
           select: {
+            id: true,
             cloudinaryPublicId: true,
             totalSiswa: true,
           },
@@ -146,7 +147,7 @@ async updateMyProfile(
 
         // Hapus semua disability types lama
         await this.prisma.disabilityType.deleteMany({
-          where: { schoolProfileId: userId },
+          where: { schoolProfileId: user.schoolProfile.id },
         });
       }
 
